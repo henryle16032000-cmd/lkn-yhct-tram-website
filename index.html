@@ -320,6 +320,26 @@
     }
   }
 
+  // ĐĂNG NHẬP CTV VÀ KÍCH HOẠT VẼ QR (ĐỔI MỖI 5 GIÂY)
+  async function handleCtvLogin() {
+    const u = document.getElementById('ctvUser').value.trim();
+    const p = document.getElementById('ctvPass').value.trim();
+    const res = await callAPI({ action: 'ctvLogin', username: u, password: p });
+
+    if (res && res.success) {
+      currentCTV = res;
+      document.getElementById('stationTitle').innerText = res.tenTram;
+      document.getElementById('ctvUserDisp').innerText = res.username;
+      hideEl('ctvLoginBox'); showEl('ctvDash');
+      document.getElementById('qr-canvas-box').innerText = 'Đang tạo mã QR...';
+
+      // startCountdown5s sẽ tự vẽ mã QR đầu tiên
+      startCountdown5s();
+    } else if (res) {
+      alert(res.message);
+    }
+  }
+
   function renderQRCode5s() {
     if (!currentCTV) return;
     const box = document.getElementById('qr-canvas-box');
@@ -349,64 +369,6 @@
     } catch (err) {
       console.error('Lỗi vẽ QR:', err);
       box.innerHTML = '<div style="color:#b91c1c;font-size:13px;">⚠ Lỗi tạo mã QR</div>';
-    }
-  }
-
-  // ĐĂNG NHẬP CTV VÀ KÍCH HOẠT VẼ QR (ĐỔI MỖI 5 GIÂY)
-  async function handleCtvLogin() {
-    const u = document.getElementById('ctvUser').value.trim();
-    const p = document.getElementById('ctvPass').value.trim();
-    const res = await callAPI({ action: 'ctvLogin', username: u, password: p });
-
-    if (res && res.success) {
-      currentCTV = res;
-      document.getElementById('stationTitle').innerText = res.tenTram;
-      document.getElementById('ctvUserDisp').innerText = res.username;
-      hideEl('ctvLoginBox'); showEl('ctvDash');
-      document.getElementById('qr-canvas-box').innerText = 'Đang tạo mã QR...';
-
-      // startCountdown5s sẽ tự vẽ mã QR đầu tiên
-      startCountdown5s();
-    } else if (res) {
-      alert(res.message);
-    }
-  }
-
-  async function renderQRCode5s() {
-    if (!currentCTV) return;
-    const box = document.getElementById('qr-canvas-box');
-    if (!box) return;
-    try {
-      if (!(await ensureQRLib())) {
-        throw new Error('Không tải được thư viện tạo mã QR. Hãy kiểm tra Wi-Fi rồi tải lại trang.');
-      }
-
-      const currentBlock = Math.floor(Date.now() / 5000);
-      const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
-      const token = customMD5(rawString);
-
-      const payload = JSON.stringify({
-        tram: currentCTV.tenTram,
-        loai: currentCTV.loaiTram,
-        token: token
-      });
-
-      const canvas = document.createElement('canvas');
-      await window.QRCode.toCanvas(canvas, payload, {
-        width: 260,
-        margin: 1,
-        errorCorrectionLevel: 'M',
-        color: { dark: '#8B1538', light: '#ffffff' }
-      });
-      canvas.style.maxWidth = '100%';
-      canvas.style.height = 'auto';
-
-      if (!currentCTV) return;
-      box.innerHTML = '';
-      box.appendChild(canvas);
-    } catch (err) {
-      console.error('Lỗi vẽ QR:', err);
-      box.innerHTML = '<div style="color:#b91c1c;font-size:13px;text-align:center;">⚠ ' + err.message + '</div>';
     }
   }
 
