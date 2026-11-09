@@ -123,7 +123,22 @@
   const API_URL = 'https://script.google.com/macros/s/AKfycbxgrB4fMqFLEHOqf8q2eQeQgbdo1KR_2KaOLX9bhvJTTUoVsoDsiltIsyd85nwb-Ryq/exec';
   const SECRET_KEY = "LKN26_YHCT_SECRET_KEY_2026"; 
   
-  // Đã xóa bỏ đoạn mã customMD5 khổng lồ và thay bằng thư viện blueimp-md5.
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxgrB4fMqFLEHOqf8q2eQeQgbdo1KR_2KaOLX9bhvJTTUoVsoDsiltIsyd85nwb-Ryq/exec';
+  const SECRET_KEY = "LKN26_YHCT_SECRET_KEY_2026"; 
+
+  // TỪ ĐIỂN VIẾT TẮT TÊN TRẠM (Giải pháp giảm tải QR và chống lỗi tiếng Việt)
+  const stationCodeMap = {
+    "Âm dương - Ngũ hành": "ADNH",
+    "Tạng tượng": "TT",
+    "Bát cương - Bát pháp": "BCBP",
+    "Đầu thống": "DT",
+    "Yêu thống": "YT",
+    "Trò chơi 1": "TC1",
+    "Trò chơi 2": "TC2",
+    "Trò chơi 3": "TC3",
+    "Trò chơi 3": "TC4",
+    "Trò chơi 3": "TC5"
+  };
 
   let deviceId = localStorage.getItem('LKN_DEVICE_ID');
   if (!deviceId) {
@@ -243,25 +258,26 @@
     if (!box) return;
     
     try {
-      const currentBlock = Math.floor(Date.now() / 5000); // Khối 5 giây
-      const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
+      const currentBlock = Math.floor(Date.now() / 5000); 
       
-      // Dùng hàm md5 trực tiếp từ thư viện blueimp-md5 (Giống code chị bạn)
+      // 1. Tạo chuỗi bảo mật MD5 bằng TÊN GỐC (Bắt buộc để khớp với file Code.gs của bạn)
+      const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
       const token = md5(rawString);
 
+      // 2. Chuyển tên trạm sang viết tắt không dấu cho nhẹ QR (Nếu không có trong từ điển thì giữ nguyên)
+      const shortTram = stationCodeMap[currentCTV.tenTram] || currentCTV.tenTram;
+
+      // 3. Đóng gói dữ liệu Payload siêu nhẹ
       const payload = JSON.stringify({
-        tram: currentCTV.tenTram,
+        tram: shortTram, 
         loai: currentCTV.loaiTram,
         token: token
       });
 
-      // BÍ KÍP CHỐNG LỖI TIẾNG VIỆT CHO QRCODEJS: Mã hóa chuỗi UTF-8 an toàn
-      const safePayload = unescape(encodeURIComponent(payload));
-
-      // Xóa QR cũ và vẽ QR mới bằng qrInstance
+      // 4. Vẽ QR bằng thư viện qrcode.min.js cũ (Chạy cực mượt vì đã hết tiếng Việt)
       box.innerHTML = '';
-      qrInstance = new QRCode(box, {
-        text: safePayload,
+      new QRCode(box, {
+        text: payload,
         width: 220,
         height: 220,
         colorDark: "#8B1538",
