@@ -105,7 +105,7 @@
 </div>
 
 <script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwcBCDFy83YXH1CsRrl--8loCyaf9nPrqErexdecHJT7aFw3-FttOM2T-LoOYEpeuHR/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbw6O7ST0OdKO8KguQgD3pT3E7tKwMhaqK6G2b3XMaDOcb1WnVDc51Znmy7BxATwvVmk/exec';
   const SECRET_KEY = "LKN26_YHCT_SECRET_KEY_2026"; // Mã khóa bí mật khớp với Code.gs
 
   let deviceId = localStorage.getItem('LKN_DEVICE_ID');
@@ -213,21 +213,21 @@
       hideEl('ctvLoginBox'); showEl('ctvDash');
       
       // Bắt đầu chu kỳ vẽ mã và chạy thanh đếm ngược 15s
-      renderQRCode15s();
-      startCountdown15s();
+      renderQRCode5s();
+      startCountdown5s();
     } else if (res) {
       alert(res.message);
     }
   }
 
   // THUẬT TOÁN TẠO MÃ QR TẠI MÁY ĐỊA PHƯƠNG KHÔNG CẦN QUA SERVER
-  function renderQRCode15s() {
+  function renderQRCode5s() {
     if (!currentCTV) return;
     const box = document.getElementById("qr-canvas-box");
     if (!box) return;
     box.innerHTML = "";
 
-    const currentBlock = Math.floor(Date.now() / 15000); // Khối 15 giây
+    const currentBlock = Math.floor(Date.now() / 5000); // Khối 5 giây
     const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
     const token = md5(rawString); // Hàm MD5 mã hóa cực nhanh
 
@@ -247,8 +247,8 @@
     });
   }
 
-  // THANH ĐẾM NGƯỢC 15S CHẠY MƯỢT MÀ
-  function startCountdown15s() {
+  // THANH ĐẾM NGƯỢC 5s CHẠY MƯỢT MÀ
+  function startCountdown5s() {
     if (timerInterval) clearInterval(timerInterval);
     
     function tick() {
