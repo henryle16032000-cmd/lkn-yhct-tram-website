@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Ngày Hội LKN 2026 - Khoa YHCT</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Thư viện quét và vẽ mã QR chuẩn -->
+  
+  <!-- Tích hợp 2 thư viện quét & vẽ QR chuẩn MD5 offline từ file chị bạn -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
   <style>
     :root { --primary: #8B1538; --bg-glass: rgba(255, 255, 255, 0.4); }
@@ -31,8 +33,14 @@
     .btn-sub { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
     .role-switch { text-align: center; margin-top: 15px; font-size: 13px; color: var(--primary); text-decoration: underline; cursor: pointer; }
     .hidden { display: none; }
-    #qrcodeContainer { display: flex; justify-content: center; align-items: center; margin: 15px 0; padding: 15px; background: white; border-radius: 12px; min-height: 230px; }
+    
+    /* KHUNG HIỂN THỊ QR CHUẨN ĐỊNH DẠNG */
+    #qr-canvas-box { display: flex; justify-content: center; align-items: center; margin: 15px 0; padding: 15px; background: white; border-radius: 16px; min-height: 230px; border: 2px solid #EAD5E7; }
     .loader { text-align: center; color: var(--primary); font-weight: bold; margin: 10px 0; display: none; }
+
+    /* THANH ĐẾM NGƯỢC 15 GIÂY */
+    .timer-bar-bg { width: 100%; background-color: #e2e8f0; height: 8px; border-radius: 9999px; overflow: hidden; margin-top: 8px; }
+    .timer-bar-fill { background: linear-gradient(to right, #8B1538, #d97706); height: 100%; width: 100%; transition: width 0.3s linear; }
   </style>
 </head>
 <body>
@@ -43,21 +51,21 @@
 
   <!-- 1. FORM SINH VIÊN -->
   <div id="studentLoginBox">
-    <h2>NGÀY HỘI HỌC THUẬT VÀ THỬ THÁCH ANH TÀI LKN 2026</h2>
+    <h2>NGÀY HỘI HỌC THUẬT & THỬ THÁCH ANH TÀI</h2>
     <input type="text" id="svMssv" placeholder="Nhập MSSV">
     <input type="text" id="svHoTen" placeholder="Nhập Họ và Tên">
     <input type="text" id="svLop" placeholder="Nhập Lớp (Ví dụ: YHCT24)">
-    <button class="btn-main" onclick="handleStudentLogin()">Vào Hệ Thống</button>
+    <button class="btn-main" onclick="handleStudentLogin()">Đăng nhập Hệ Thống</button>
     <div class="role-switch" onclick="switchRole('ctv')">🔐 Đăng nhập dành cho Ban Tổ Chức...</div>
   </div>
 
   <!-- 2. FORM CTV -->
   <div id="ctvLoginBox" class="hidden">
     <h2>QUẢN LÝ TRẠM</h2>
-    <input type="text" id="ctvUser" placeholder="Tài khoản CTV">
-    <input type="password" id="ctvPass" placeholder="Mã PIN">
+    <input type="text" id="ctvUser" placeholder="ID Tài khoản đã cấp">
+    <input type="password" id="ctvPass" placeholder="Password">
     <button class="btn-main" onclick="handleCtvLogin()">Đăng Nhập Trạm</button>
-    <div class="role-switch" onclick="switchRole('student')">⬅ Quay lại đăng nhập Sinh viên</div>
+    <div class="role-switch" onclick="switchRole('student')">⬅ Quay lại Đăng nhập Sinh viên</div>
   </div>
 
   <!-- 3. DASHBOARD SINH VIÊN -->
@@ -69,25 +77,36 @@
     <div id="svStatus" style="text-align:center; font-weight:bold; margin-top:15px; color:var(--primary);"></div>
   </div>
 
-  <!-- 4. DASHBOARD CTV (HIỂN THỊ QR ĐỘNG KHÔNG CẦN CHỜ SERVER) -->
+  <!-- 4. DASHBOARD CTV (HIỂN THỊ MÃ QR 15S ĐẾM NGƯỢC) -->
   <div id="ctvDash" class="hidden">
     <h2 id="stationTitle">Tên Trạm</h2>
-    <p style="text-align:center; font-size:13px;">Mã QR sinh viên quét</p>
-    <div id="qrcodeContainer"></div>
-    <p style="text-align:center; font-size:12px; color:#000;">Trực trạm: <b id="ctvUserDisp"></b></p>
+    
+    <div id="qr-canvas-box"></div>
+    
+    <div style="margin-top: 10px;">
+      <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold; color:#475569;">
+        <span>Tự đổi mã sau:</span>
+        <span id="time-countdown" style="color:var(--primary);">5s</span>
+      </div>
+      <div class="timer-bar-bg">
+        <div id="progress-bar" class="timer-bar-fill"></div>
+      </div>
+    </div>
+    
+    <p style="text-align:center; font-size:12px; color:#000; margin-top:15px;">Trực trạm: <b id="ctvUserDisp"></b></p>
   </div>
 
   <!-- 5. KHUNG CAMERA QUÉT -->
   <div id="scannerBox" class="hidden">
-    <h3>HÃY SCAN MÃ QR CỦA TRẠM</h3>
+    <h3>HÃY QUÉT MÃ QR CỦA TRẠM</h3>
     <div id="reader" style="width:100%; margin:15px 0;"></div>
     <button class="btn-sub" onclick="closeStudentScanner()">Hủy Quét</button>
   </div>
 </div>
 
 <script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzd_JVoq6vwH7m8DNZsVvgeFNqhcBqyj0bSiADIbejQftZXgzuq1PvNV7300Q4crp0n/exec';
-  const SECRET_KEY = 'LKN26_YHCT_SECRET_KEY';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwcBCDFy83YXH1CsRrl--8loCyaf9nPrqErexdecHJT7aFw3-FttOM2T-LoOYEpeuHR/exec';
+  const SECRET_KEY = "LKN26_YHCT_SECRET_KEY_2026"; // Mã khóa bí mật khớp với Code.gs
 
   let deviceId = localStorage.getItem('LKN_DEVICE_ID');
   if (!deviceId) {
@@ -97,16 +116,15 @@
 
   let currentSV = null;
   let currentCTV = null;
-  let qrInterval = null;
+  let timerInterval = null;
   let html5Scanner = null;
-  let qrCodeGenerator = null;
 
   function showEl(id) { document.getElementById(id).classList.remove('hidden'); }
   function hideEl(id) { document.getElementById(id).classList.add('hidden'); }
 
   function switchRole(role) {
     if (role === 'ctv') { hideEl('studentLoginBox'); showEl('ctvLoginBox'); }
-    else { hideEl('studentLoginBox'); showEl('ctvLoginBox'); }
+    else { hideEl('ctvLoginBox'); showEl('studentLoginBox'); }
   }
 
   async function callAPI(payload) {
@@ -126,7 +144,7 @@
     const mssv = document.getElementById('svMssv').value.trim();
     const hoTen = document.getElementById('svHoTen').value.trim();
     const lop = document.getElementById('svLop').value.trim();
-    if (!mssv || !hoTen || !lop) return alert('Nhập đủ thông tin!');
+    if (!mssv || !hoTen || !lop) return alert('Vui lòng nhập đầy đủ thông tin!');
 
     const res = await callAPI({ action: 'studentLogin', mssv: mssv, hoTen: hoTen, lop: lop, deviceId: deviceId });
     if (!res) return;
@@ -149,8 +167,8 @@
   }
 
   function showUpdateModal() {
-    const newName = prompt('Nhập lại Họ và Tên:', currentSV.hoTen);
-    const newClass = prompt('Nhập lại Lớp:', currentSV.lop);
+    const newName = prompt('Nhập lại Họ và Tên chính xác:', currentSV.hoTen);
+    const newClass = prompt('Nhập lại Lớp chính xác:', currentSV.lop);
     if (newName && newClass) forceUpdateStudent(currentSV.mssv, newName, newClass);
   }
 
@@ -182,7 +200,7 @@
     }
   }
 
-  // ĐĂNG NHẬP CTV VÀ TẠO QR TỨC THÌ TRÊN TRÌNH DUYỆT (0.01s)
+  // ĐĂNG NHẬP CTV VÀ KÍCH HOẠT VẼ QR 15 GIÂY (LỌC TỪ CODE CHỊ BẠN)
   async function handleCtvLogin() {
     const u = document.getElementById('ctvUser').value.trim();
     const p = document.getElementById('ctvPass').value.trim();
@@ -194,38 +212,66 @@
       document.getElementById('ctvUserDisp').innerText = res.username;
       hideEl('ctvLoginBox'); showEl('ctvDash');
       
-      // Tạo mã QR ngay lập tức
-      renderLocalQR();
-      if (qrInterval) clearInterval(qrInterval);
-      qrInterval = setInterval(renderLocalQR, 5000);
+      // Bắt đầu chu kỳ vẽ mã và chạy thanh đếm ngược 15s
+      renderQRCode15s();
+      startCountdown15s();
     } else if (res) {
       alert(res.message);
     }
   }
 
-  // HÀM MÃ HÓA BASE64 TẠI MÁY ĐỊA PHƯƠNG KHÔNG CẦN CHỜ SERVER
-  function renderLocalQR() {
+  // THUẬT TOÁN TẠO MÃ QR TẠI MÁY ĐỊA PHƯƠNG KHÔNG CẦN QUA SERVER
+  function renderQRCode15s() {
     if (!currentCTV) return;
-    const container = document.getElementById('qrcodeContainer');
-    container.innerHTML = '';
+    const box = document.getElementById("qr-canvas-box");
+    if (!box) return;
+    box.innerHTML = "";
 
-    const ts = Date.now();
-    const rawSig = currentCTV.tenTram + '|' + currentCTV.loaiTram + '|' + ts + '|' + SECRET_KEY;
-    // Mã hóa UTF-8 sang Base64 chuẩn
-    const sig = btoa(unescape(encodeURIComponent(rawSig)));
+    const currentBlock = Math.floor(Date.now() / 15000); // Khối 15 giây
+    const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
+    const token = md5(rawString); // Hàm MD5 mã hóa cực nhanh
 
     const payload = JSON.stringify({
       tram: currentCTV.tenTram,
       loai: currentCTV.loaiTram,
-      ts: ts,
-      sig: sig
+      token: token
     });
 
-    qrCodeGenerator = new QRCode(container, {
+    new QRCode(box, {
       text: payload,
       width: 210,
-      height: 210
+      height: 210,
+      colorDark: "#8B1538",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
     });
+  }
+
+  // THANH ĐẾM NGƯỢC 15S CHẠY MƯỢT MÀ
+  function startCountdown15s() {
+    if (timerInterval) clearInterval(timerInterval);
+    
+    function tick() {
+      if (!currentCTV) return;
+      const now = Date.now();
+      const secondsLeft = 15 - (Math.floor(now / 1000) % 15);
+      
+      const countEl = document.getElementById("time-countdown");
+      if (countEl) countEl.innerText = `${secondsLeft}s`;
+
+      const barEl = document.getElementById("progress-bar");
+      if (barEl) {
+        const pct = (secondsLeft / 15) * 100;
+        barEl.style.width = `${pct}%`;
+      }
+
+      if (secondsLeft === 15) {
+        renderQRCode15s();
+      }
+    }
+    
+    tick();
+    timerInterval = setInterval(tick, 500);
   }
 </script>
 </body>
