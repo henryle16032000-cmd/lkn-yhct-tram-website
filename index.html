@@ -254,18 +254,18 @@
     function tick() {
       if (!currentCTV) return;
       const now = Date.now();
-      const secondsLeft = 15 - (Math.floor(now / 1000) % 15);
+      const secondsLeft = 5 - (Math.floor(now / 1000) % 5);
       
       const countEl = document.getElementById("time-countdown");
       if (countEl) countEl.innerText = `${secondsLeft}s`;
 
       const barEl = document.getElementById("progress-bar");
       if (barEl) {
-        const pct = (secondsLeft / 15) * 100;
+        const pct = (secondsLeft / 5) * 100;
         barEl.style.width = `${pct}%`;
       }
 
-      if (secondsLeft === 15) {
+      if (secondsLeft === 5) {
         renderQRCode15s();
       }
     }
