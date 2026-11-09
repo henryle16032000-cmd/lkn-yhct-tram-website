@@ -367,26 +367,33 @@
     if (!box) return;
     
     try {
-      if (typeof QRCode === 'undefined') {
-        throw new Error("Thư viện QR chưa sẵn sàng, hãy tải lại trang.");
-      }
+      if (typeof QRCode === 'undefined') throw new Error("Thư viện QR chưa tải xong.");
 
-      const currentBlock = Math.floor(Date.now() / 5000);
-      
-      // Token vẫn dùng tên gốc để khớp với bảo mật bên Code.gs
+      // 1. LẤY THỜI GIAN THỰC
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      const currentTime = `${hh}:${mm}:${ss}`;
+
+      // 2. TẠO MÃ BẢO MẬT & CẮT NGẮN CÒN 8 KÝ TỰ (Tuyệt chiêu giảm tải)
+      const currentBlock = Math.floor(now.getTime() / 5000);
       const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
-      const token = customMD5(rawString);
+      const fullToken = customMD5(rawString);
+      const shortToken = fullToken.substring(0, 8); // Chặt bỏ 24 ký tự thừa!
 
-      // Chuyển tên trạm sang viết tắt (ADNH, TT, BCBP...)
-      const shortTram = stationCodeMap[currentCTV.tenTram] || currentCTV.tenTram;
+      // 3. XỬ LÝ TÊN TRẠM ẨN
+      const cleanName = currentCTV.tenTram.trim();
+      const shortTram = stationCodeMap[cleanName] || cleanName; 
 
-      // Đóng gói JSON chuẩn: Trạm viết tắt + Giờ đăng nhập + Token (Không còn chữ tiếng Việt)
+      // 4. ĐÓNG GÓI JSON GỌN NHẸ
       const payload = JSON.stringify({
         tram: shortTram,
-        time: ctvLoginTime,
-        token: token
+        time: currentTime,
+        token: shortToken
       });
 
+      // 5. VẼ QR (Ép dung lượng thấp để quét nhanh như chớp)
       box.innerHTML = '';
       new QRCode(box, {
         text: payload,
@@ -394,11 +401,11 @@
         height: 220,
         colorDark: "#8B1538",
         colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
+        correctLevel: QRCode.CorrectLevel.L // Mức L (Low) giúp sức chứa tăng vọt và mã QR thưa hơn rất nhiều
       });
     } catch (err) {
       console.error('Lỗi vẽ QR:', err);
-      box.innerHTML = '<div style="color:#b91c1c; font-size:12px; font-weight:bold; text-align:center;">⚠ ' + err.message + '</div>';
+      box.innerHTML = `<div style="color:#b91c1c; font-size:12px; font-weight:bold; text-align:center; padding:10px;">⚠ ${err.message}</div>`;
     }
   }
 
