@@ -123,16 +123,16 @@
   const API_URL = 'https://script.google.com/macros/s/AKfycbyUhxlid4bhca4kvP0jKDhYuF7JKf8uOakzoH5J-7s0omc0NVz3WTKQ5OwNk696RCCn/exec';
   const SECRET_KEY = "LKN26_YHCT_SECRET_KEY_2026"; 
   const stationCodeMap = {
-    "Âm dương - Ngũ hành": "ADNH",
-    "Tạng tượng": "TT",
-    "Bát cương - Bát pháp": "BCBP",
-    "Đầu thống": "DT",
-    "Yêu thống": "YT",
-    "Trò chơi 1": "TC1",
-    "Trò chơi 2": "TC2",
-    "Trò chơi 3": "TC3",
-    "Trò chơi 3": "TC4",
-    "Trò chơi 3": "TC5"
+    "ADNH": { name: "Trạm Âm dương - Ngũ hành", loai: "Học thuật" },
+    "TT":   { name: "Trạm Tạng tượng", loai: "Học thuật" },
+    "BCBP": { name: "Trạm Bát cương - Bát pháp", loai: "Học thuật" },
+    "DT":   { name: "Trạm Đầu thống", loai: "Học thuật" },
+    "YT":   { name: "Trạm Yêu thống", loai: "Học thuật" },
+    "TC1":  { name: "Trạm Trò chơi 1", loai: "Trò chơi" },
+    "TC2":  { name: "Trạm Trò chơi 2", loai: "Trò chơi" },
+    "TC3":  { name: "Trạm Trò chơi 3", loai: "Trò chơi" },
+    "TC4":  { name: "Trạm Trò chơi 4", loai: "Trò chơi" },
+    "TC5":  { name: "Trạm Trò chơi 5", loai: "Trò chơi" }
   };
 
   function customMD5(string) {
@@ -369,31 +369,17 @@
     try {
       if (typeof QRCode === 'undefined') throw new Error("Thư viện QR chưa tải xong.");
 
-      // 1. LẤY THỜI GIAN THỰC
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      const ss = String(now.getSeconds()).padStart(2, '0');
-      const currentTime = `${hh}:${mm}:${ss}`;
-
-      // 2. TẠO MÃ BẢO MẬT & CẮT NGẮN CÒN 8 KÝ TỰ (Tuyệt chiêu giảm tải)
-      const currentBlock = Math.floor(now.getTime() / 5000);
+      const currentBlock = Math.floor(Date.now() / 5000);
       const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
-      const fullToken = customMD5(rawString);
-      const shortToken = fullToken.substring(0, 8); // Chặt bỏ 24 ký tự thừa!
+      const shortToken = customMD5(rawString).substring(0, 8); // Token 8 ký tự
 
-      // 3. XỬ LÝ TÊN TRẠM ẨN
+      // Lấy mã viết tắt của trạm (ADNH, TT...)
       const cleanName = currentCTV.tenTram.trim();
       const shortTram = stationCodeMap[cleanName] || cleanName; 
 
-      // 4. ĐÓNG GÓI JSON GỌN NHẸ
-      const payload = JSON.stringify({
-        tram: shortTram,
-        time: currentTime,
-        token: shortToken
-      });
+      // Nối trực tiếp thành chuỗi siêu ngắn: ADNH + a1b2c3d4
+      const payload = shortTram + shortToken;
 
-      // 5. VẼ QR (Ép dung lượng thấp để quét nhanh như chớp)
       box.innerHTML = '';
       new QRCode(box, {
         text: payload,
@@ -401,7 +387,7 @@
         height: 220,
         colorDark: "#8B1538",
         colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.L // Mức L (Low) giúp sức chứa tăng vọt và mã QR thưa hơn rất nhiều
+        correctLevel: QRCode.CorrectLevel.L
       });
     } catch (err) {
       console.error('Lỗi vẽ QR:', err);
