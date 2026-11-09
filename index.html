@@ -135,7 +135,7 @@
     <div style="margin-top: 10px;">
       <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold; color:#475569;">
         <span>Tự đổi mã sau:</span>
-        <span id="time-countdown" style="color:var(--primary);">10s</span>
+        <span id="time-countdown" style="color:var(--primary);">5s</span>
       </div>
       <div class="timer-bar-bg">
         <div id="progress-bar" class="timer-bar-fill"></div>
@@ -156,7 +156,7 @@
 </div>
 
 <script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwlTr8qnc8NFvvr0roytn1lo9ByPnOQEuc8sct6PxPz6WrtrO0rHXpGgMDICBPRQDQN/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyUhxlid4bhca4kvP0jKDhYuF7JKf8uOakzoH5J-7s0omc0NVz3WTKQ5OwNk696RCCn/exec';
   const SECRET_KEY = "LKN26_YHCT_SECRET_KEY_2026"; 
   const stationCodeMap = {
     "ADNH": { name: "Trạm Âm dương - Ngũ hành", loai: "Học thuật" },
@@ -415,7 +415,7 @@
     }
   }
 
-  function renderQRCode10s() {
+  function renderQRCode5s() {
     if (!currentCTV) return;
 
     const box = document.getElementById('qr-canvas-box');
@@ -443,7 +443,7 @@
         const shortTram = getStationCode(tenTram);
 
         // Xác định chu kỳ 5 giây
-        const currentBlock = Math.floor(Date.now() / 10000);
+        const currentBlock = Math.floor(Date.now() / 5000);
 
         // Giữ nguyên công thức tạo token hiện tại
         const rawString =
@@ -489,7 +489,7 @@
 
   let lastBlock = -1;
 
-  function startCountdown10s() {
+  function startCountdown5s() {
     if (timerInterval) clearInterval(timerInterval);
     lastBlock = -1;
 
@@ -497,15 +497,15 @@
       try {
         if (!currentCTV) return;
         const now = Date.now();
-        const secondsLeft = 10 - (Math.floor(now / 1000) % 10);
+        const secondsLeft = 5 - (Math.floor(now / 1000) % 5);
 
         const countEl = document.getElementById("time-countdown");
         if (countEl) countEl.innerText = `${secondsLeft}s`;
 
         const barEl = document.getElementById("progress-bar");
-        if (barEl) barEl.style.width = `${(secondsLeft / 10) * 100}%`;
+        if (barEl) barEl.style.width = `${(secondsLeft / 5) * 100}%`;
 
-        const block = Math.floor(now / 10000);
+        const block = Math.floor(now / 5000);
         if (block !== lastBlock) {
           lastBlock = block;
           renderQRCode5s();
