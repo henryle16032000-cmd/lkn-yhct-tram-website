@@ -35,9 +35,13 @@
     .role-switch { text-align: center; margin-top: 15px; font-size: 13px; color: var(--primary); text-decoration: underline; cursor: pointer; }
     .hidden { display: none; }
 
-    /* KHUNG HIỂN THỊ QR CHUẨN ĐỊNH DẠNG */
-    #qr-canvas-box { display: flex; justify-content: center; align-items: center; margin: 15px 0; padding: 15px; background: white; border-radius: 16px; min-height: 230px; border: 2px solid #EAD5E7; }
-    .loader { text-align: center; color: var(--primary); font-weight: bold; margin: 10px 0; display: none; }
+    #qr-canvas-box canvas,
+    #qr-canvas-box img {
+    display: block;
+    width: 220px;
+    height: 220px;
+    max-width: 100%;
+    }
 
     /* THANH ĐẾM NGƯỢC 5 GIÂY */
     .timer-bar-bg { width: 100%; background-color: #e2e8f0; height: 8px; border-radius: 9999px; overflow: hidden; margin-top: 8px; }
@@ -135,6 +139,24 @@
     "TC5":  { name: "Trạm Trò chơi 5", loai: "Trò chơi" }
   };
 
+  function getStationCode(tenTram) {
+    const value = String(tenTram || "").trim();
+
+    if (Object.prototype.hasOwnProperty.call(stationCodeMap, value)) {
+        return value;
+    }
+
+    const found = Object.entries(stationCodeMap).find(
+        ([code, info]) => info.name.trim() === value
+    );
+
+    if (!found) {
+        throw new Error("Không tìm thấy mã viết tắt của trạm: " + value);
+    }
+
+    return found[0];
+  }
+  
   function customMD5(string) {
     function rotateLeft(lValue, iShiftBits) { return (lValue << iShiftBits) | (lValue >>> (32 - iShiftBits)); }
     function addUnsigned(lX, lY) {
@@ -363,46 +385,73 @@
 
   function renderQRCode5s() {
     if (!currentCTV) return;
+
     const box = document.getElementById('qr-canvas-box');
     if (!box) return;
-    
+
     try {
-      if (typeof QRCode === 'undefined') throw new Error("Thư viện QR chưa tải xong.");
+        // Kiểm tra thư viện QR
+        if (typeof QRCode === 'undefined') {
+            throw new Error("Thư viện tạo QR chưa được tải.");
+        }
 
-      const currentBlock = Math.floor(Date.now() / 5000);
-      const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
-      const shortToken = customMD5(rawString).substring(0, 8); // Token 8 ký tự
+        // Kiểm tra thư viện MD5
+        if (typeof md5 !== 'function') {
+            throw new Error("Thư viện MD5 chưa được tải.");
+        }
 
-      // Ánh xạ tên trạm sang mã viết tắt 4 ký tự cực kỳ chuẩn xác
-      const rawName = currentCTV.tenTram.trim();
-      let shortTram = "ADNH"; // Mặc định
-      
-      if (rawName.includes("Âm dương") || rawName.includes("ADNH")) shortTram = "ADNH";
-      else if (rawName.includes("Tạng tượng") || rawName.includes("TT")) shortTram = "TT";
-      else if (rawName.includes("Bát cương") || rawName.includes("BCBP")) shortTram = "BCBP";
-      else if (rawName.includes("Đầu thống") || rawName.includes("DT")) shortTram = "DT";
-      else if (rawName.includes("Yêu thống") || rawName.includes("YT")) shortTram = "YT";
-      else if (rawName.includes("Trò chơi 1") || rawName.includes("TC1")) shortTram = "TC1";
-      else if (rawName.includes("Trò chơi 2") || rawName.includes("TC2")) shortTram = "TC2";
-      else if (rawName.includes("Trò chơi 3") || rawName.includes("TC3")) shortTram = "TC3";
-      else if (rawName.includes("Trò chơi 4") || rawName.includes("TC4")) shortTram = "TC4";
-      else if (rawName.includes("Trò chơi 5") || rawName.includes("TC5")) shortTram = "TC5";
+        // Lấy tên trạm đầy đủ
+        const tenTram = String(currentCTV.tenTram || '').trim();
 
-      // Nối trực tiếp: Ký hiệu ngắn + Token ngắn (Tổng cộng đúng 12 ký tự!)
-      const payload = shortTram + shortToken;
+        if (!tenTram) {
+            throw new Error("Không tìm thấy thông tin tên trạm.");
+        }
 
-      box.innerHTML = '';
-      new QRCode(box, {
-        text: payload,
-        width: 220,
-        height: 220,
-        colorDark: "#8B1538",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.L
-      });
+        // Tìm mã viết tắt của trạm
+        const shortTram = getStationCode(tenTram);
+
+        // Xác định chu kỳ 5 giây
+        const currentBlock = Math.floor(Date.now() / 5000);
+
+        // Giữ nguyên công thức tạo token hiện tại
+        const rawString =
+            SECRET_KEY + "_" + tenTram + "_" + currentBlock;
+
+        // Tạo MD5 chuẩn, lấy 8 ký tự đầu
+        const shortToken = md5(rawString).substring(0, 8);
+
+        // Ghép mã trạm và token
+        const payload = shortTram + shortToken;
+
+        // Kiểm tra độ dài dữ liệu
+        console.log("Mã trạm:", shortTram);
+        console.log("Độ dài QR:", payload.length);
+
+        // Xóa QR cũ
+        box.innerHTML = '';
+
+        // Tạo QR mới với kích thước cố định
+        new QRCode(box, {
+            text: payload,
+            width: 220,
+            height: 220,
+            colorDark: "#8B1538",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.L
+        });
+
     } catch (err) {
-      console.error('Lỗi vẽ QR:', err);
-      box.innerHTML = `<div style="color:#b91c1c; font-size:12px; font-weight:bold; text-align:center; padding:10px;">⚠ ${err.message}</div>`;
+        console.error("Lỗi vẽ QR:", err);
+
+        box.innerHTML = '';
+
+        const errorBox = document.createElement('div');
+        errorBox.style.cssText =
+            "color:#b91c1c;font-size:12px;font-weight:bold;text-align:center;padding:10px;";
+
+        errorBox.textContent = "⚠ " + err.message;
+
+        box.appendChild(errorBox);
     }
   }
 
