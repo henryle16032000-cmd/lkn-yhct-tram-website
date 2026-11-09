@@ -415,7 +415,7 @@
     }
   }
 
-  function renderQRCode5s() {
+  function renderQRCode10s() {
     if (!currentCTV) return;
 
     const box = document.getElementById('qr-canvas-box');
@@ -443,7 +443,7 @@
         const shortTram = getStationCode(tenTram);
 
         // Xác định chu kỳ 5 giây
-        const currentBlock = Math.floor(Date.now() / 5000);
+        const currentBlock = Math.floor(Date.now() / 10000);
 
         // Giữ nguyên công thức tạo token hiện tại
         const rawString =
@@ -489,7 +489,7 @@
 
   let lastBlock = -1;
 
-  function startCountdown5s() {
+  function startCountdown10s() {
     if (timerInterval) clearInterval(timerInterval);
     lastBlock = -1;
 
@@ -497,15 +497,15 @@
       try {
         if (!currentCTV) return;
         const now = Date.now();
-        const secondsLeft = 5 - (Math.floor(now / 1000) % 5);
+        const secondsLeft = 10 - (Math.floor(now / 1000) % 10);
 
         const countEl = document.getElementById("time-countdown");
         if (countEl) countEl.innerText = `${secondsLeft}s`;
 
         const barEl = document.getElementById("progress-bar");
-        if (barEl) barEl.style.width = `${(secondsLeft / 5) * 100}%`;
+        if (barEl) barEl.style.width = `${(secondsLeft / 10) * 100}%`;
 
-        const block = Math.floor(now / 5000);
+        const block = Math.floor(now / 10000);
         if (block !== lastBlock) {
           lastBlock = block;
           renderQRCode5s();
