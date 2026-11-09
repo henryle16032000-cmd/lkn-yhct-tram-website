@@ -349,24 +349,25 @@
     });
   }
 
-  // Nếu thư viện QR chưa có thì thử tải dự phòng
   async function ensureQRLib() {
-    if (typeof QRCode !== 'undefined') return;
+    if (typeof QRCode !== 'undefined' && QRCode.toCanvas) return;
     const urls = [
-      'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-      'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
+      'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+      'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js'
     ];
     for (const u of urls) {
-      try { await loadScript(u); if (typeof QRCode !== 'undefined') return; }
-      catch (e) { console.warn(e.message); }
+      try {
+        await loadScript(u);
+        if (typeof QRCode !== 'undefined' && QRCode.toCanvas) return;
+      } catch (e) { console.warn(e.message); }
     }
   }
 
-  function renderQRCode5s() {
+  async function renderQRCode5s() {
     if (!currentCTV) return;
     const box = document.getElementById('qr-canvas-box');
     try {
-      if (typeof QRCode === 'undefined')
+      if (typeof QRCode === 'undefined' || !QRCode.toCanvas)
         throw new Error('Chưa tải được thư viện QR. Hãy kiểm tra mạng rồi tải lại trang.');
 
       const block = Math.floor(Date.now() / 5000);
@@ -376,13 +377,17 @@
         loai: currentCTV.loaiTram,
         token: token
       });
+      console.log('QR payload (' + new TextEncoder().encode(payload).length + ' byte):', payload);
 
-      box.innerHTML = '';
-      new QRCode(box, {
-        text: payload, width: 210, height: 210,
-        colorDark: '#8B1538', colorLight: '#ffffff',
-        correctLevel: QRCode.CorrectLevel.M
+      const canvas = document.createElement('canvas');
+      await QRCode.toCanvas(canvas, payload, {
+        width: 260,
+        margin: 1,
+        errorCorrectionLevel: 'M',
+        color: { dark: '#8B1538', light: '#ffffff' }
       });
+      box.innerHTML = '';
+      box.appendChild(canvas);
     } catch (err) {
       console.error('Lỗi vẽ QR:', err);
       box.innerHTML = '<div style="color:#b91c1c;font-size:13px;text-align:center;">⚠ ' + err.message + '</div>';
