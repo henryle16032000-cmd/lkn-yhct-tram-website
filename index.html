@@ -322,15 +322,12 @@
     }
   }
 
-  // =====================================================================
-  //  TẢI THƯ VIỆN VẼ QR (qrcode@1.5.3) - THỬ LẦN LƯỢT NHIỀU CDN
-  // =====================================================================
-  const QR_LIB_URLS = [
-    'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
-    'https://fastly.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
-    'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js'
-  ];
-
+    const QR_LIB_URLS = [
+      'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/lib/browser.min.js',
+      'https://fastly.jsdelivr.net/npm/qrcode@1.5.4/lib/browser.min.js',
+      'https://unpkg.com/qrcode@1.5.4/lib/browser.min.js'
+    }
+      
   function hasQR() {
     return !!(window.QRCode && typeof window.QRCode.toCanvas === 'function');
   }
@@ -374,9 +371,18 @@
       document.getElementById('stationTitle').innerText = res.tenTram;
       document.getElementById('ctvUserDisp').innerText = res.username;
       hideEl('ctvLoginBox'); showEl('ctvDash');
-      document.getElementById('qr-canvas-box').innerText = 'Đang tạo mã QR...';
+      const qrBox = document.getElementById('qr-canvas-box');
+      qrBox.innerText = 'Đang tải thư viện QR...';
 
-      // startCountdown5s sẽ tự vẽ mã QR đầu tiên
+      const qrReady = await ensureQRLib();
+
+      if (!qrReady) {
+        qrBox.innerText =
+          '⚠ Không tải được thư viện QR. Vui lòng tải lại trang.';
+        return;
+      }
+      
+      qrBox.innerText = 'Đang tạo mã QR...';
       startCountdown5s();
     } else if (res) {
       alert(res.message);
