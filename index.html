@@ -1,1 +1,222 @@
-https://script.google.com/macros/s/AKfycbx6VU2CE0auR4UCxp4qMRU6uGa0L9Ftp1tO1qW7VT0nO_s6BdzKs8QdxhJ_TPjYMc7j/exec
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Ngày Hội LKN 2026 - Khoa YHCT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Thư viện Quét QR và Tạo mã QR -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    :root { --primary: #8B1538; --bg-glass: rgba(255, 255, 255, 0.4); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans', sans-serif; }
+    body { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+    body::before {
+      content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: url('https://lh3.googleusercontent.com/d/1BZLMXU4JMVbQtJtNB9sMw5GSPTELRcfu') center/cover; z-index: -1;
+    }
+    .card {
+      background: var(--bg-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      width: 100%; max-width: 420px; padding: 25px 20px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+    .logo { text-align: center; margin-bottom: 15px; } .logo img { max-width: 140px; }
+    h2, h3 { color: var(--primary); text-align: center; margin-bottom: 15px; }
+    input { width: 100%; padding: 12px; margin-bottom: 12px; border: 2px solid #EAD5E7; border-radius: 8px; font-size: 15px; outline: none; }
+    input:focus { border-color: var(--primary); }
+    button { width: 100%; padding: 13px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 10px; }
+    .btn-main { background: var(--primary); color: white; }
+    .btn-sub { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+    .role-switch { text-align: center; margin-top: 15px; font-size: 13px; color: var(--primary); text-decoration: underline; cursor: pointer; }
+    .hidden { display: none; }
+    #qrcodeContainer { display: flex; justify-content: center; margin: 15px 0; padding: 10px; background: white; border-radius: 12px; }
+    .loader { text-align: center; color: var(--primary); font-weight: bold; margin: 10px 0; display: none; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo"><img src="https://lh3.googleusercontent.com/d/1pX-U4BcmFGPe6eBJL5FoXz-UHnUtg8p4"></div>
+  <div class="loader" id="loader">Đang xử lý...</div>
+
+  <!-- 1. GIAO DIỆN ĐĂNG NHẬP SINH VIÊN (MẶC ĐỊNH) -->
+  <div id="studentLoginBox">
+    <h2>THAM GIA NGÀY HỘI LKN 2026</h2>
+    <input type="text" id="svMssv" placeholder="Nhập MSSV">
+    <input type="text" id="svHoTen" placeholder="Nhập Họ và Tên">
+    <input type="text" id="svLop" placeholder="Nhập Lớp (Ví dụ: YHCT2023)">
+    <button class="btn-main" onclick="handleStudentLogin()">Vào Hệ Thống</button>
+    <div class="role-switch" onclick="switchRole('ctv')">🔒 Dành cho Ban Tổ Chức / Trực trạm</div>
+  </div>
+
+  <!-- 2. GIAO DIỆN ĐĂNG NHẬP CTV -->
+  <div id="ctvLoginBox" class="hidden">
+    <h2>QUẢN LÝ TRẠM (CTV)</h2>
+    <input type="text" id="ctvUser" placeholder="Tài khoản CTV">
+    <input type="password" id="ctvPass" placeholder="Mã PIN">
+    <button class="btn-main" onclick="handleCtvLogin()">Đăng Nhập Trạm</button>
+    <div class="role-switch" onclick="switchRole('student')">⬅ Quay lại màn hình Sinh viên</div>
+  </div>
+
+  <!-- 3. MAN HÌNH SINH VIÊN (QUÉT QR) -->
+  <div id="studentDash" class="hidden">
+    <h2>CHÀO MỪNG BẠN</h2>
+    <p style="text-align:center; margin-bottom:15px;"><b id="svNameDisp"></b> - <span id="svClassDisp"></span></p>
+    <button class="btn-main" onclick="openStudentScanner()">📸 Quét Mã QR Tại Trạm</button>
+    <button class="btn-sub" onclick="showUpdateModal()">✏ Sửa thông tin cá nhân</button>
+    <div id="svStatus" style="text-align:center; font-weight:bold; margin-top:15px; color:var(--primary);"></div>
+  </div>
+
+  <!-- 4. MÀN HÌNH CTV (HIỂN THỊ QR ĐỘNG 5S) -->
+  <div id="ctvDash" class="hidden">
+    <h2 id="stationTitle">Tên Trạm</h2>
+    <p style="text-align:center; font-size:13px;">Mã QR tự thay đổi mỗi 5 giây để chống chụp ảnh gửi xa</p>
+    <div id="qrcodeContainer"></div>
+    <p style="text-align:center; font-size:12px; color:#666;">Trực trạm: <b id="ctvUserDisp"></b></p>
+  </div>
+
+  <!-- 5. KHUNG CAMERA QUÉT -->
+  <div id="scannerBox" class="hidden">
+    <h3>ĐƯA CAMERA VÀO MÃ QR CỦA TRẠM</h3>
+    <div id="reader" style="width:100%; margin:15px 0;"></div>
+    <button class="btn-sub" onclick="closeStudentScanner()">Hủy Quét</button>
+  </div>
+</div>
+
+<script>
+  const API_URL = 'https://script.google.com/macros/s/AKfycbx6VU2CE0auR4UCxp4qMRU6uGa0L9Ftp1tO1qW7VT0nO_s6BdzKs8QdxhJ_TPjYMc7j/exec';
+
+  // Lấy hoặc Tạo Mã định danh thiết bị độc bản (Device UUID)
+  let deviceId = localStorage.getItem('LKN_DEVICE_ID');
+  if (!deviceId) {
+    deviceId = 'DEV_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
+    localStorage.setItem('LKN_DEVICE_ID', deviceId);
+  }
+
+  let currentSV = null;
+  let currentCTV = null;
+  let qrInterval = null;
+  let html5Scanner = null;
+  let qrCodeObj = null;
+
+  function showEl(id) { document.getElementById(id).classList.remove('hidden'); }
+  function hideEl(id) { document.getElementById(id).classList.add('hidden'); }
+
+  function switchRole(role) {
+    if (role === 'ctv') { hideEl('studentLoginBox'); showEl('ctvLoginBox'); }
+    else { hideEl('ctvLoginBox'); showEl('studentLoginBox'); }
+  }
+
+  async function callAPI(payload) {
+    showEl('loader');
+    try {
+      const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+      const data = await res.json();
+      hideEl('loader');
+      return data;
+    } catch(e) {
+      hideEl('loader');
+      alert('Lỗi kết nối máy chủ!'); return null;
+    }
+  }
+
+  // XỬ LÝ SINH VIÊN ĐĂNG NHẬP
+  async function handleStudentLogin() {
+    const mssv = document.getElementById('svMssv').value.trim();
+    const hoTen = document.getElementById('svHoTen').value.trim();
+    const lop = document.getElementById('svLop').value.trim();
+
+    if (!mssv || !hoTen || !lop) return alert('Vui lòng nhập đầy đủ thông tin!');
+
+    const res = await callAPI({ action: 'studentLogin', mssv: mssv, hoTen: hoTen, lop: lop, deviceId: deviceId });
+    if (!res) return;
+
+    if (res.status === 'success') {
+      enterStudentDash(res.student);
+    } else if (res.status === 'mismatch' || res.status === 'not_found') {
+      if (confirm(res.message)) {
+        await forceUpdateStudent(mssv, hoTen, lop);
+      }
+    } else {
+      alert(res.message);
+    }
+  }
+
+  async function forceUpdateStudent(mssv, hoTen, lop) {
+    const res = await callAPI({ action: 'updateStudentInfo', mssv: mssv, hoTen: hoTen, lop: lop, deviceId: deviceId });
+    if (res && res.status === 'success') {
+      alert('Cập nhật thành công!');
+      enterStudentDash(res.student);
+    }
+  }
+
+  function showUpdateModal() {
+    const newName = prompt('Nhập lại Họ và Tên chính xác:', currentSV.hoTen);
+    const newClass = prompt('Nhập lại Lớp chính xác:', currentSV.lop);
+    if (newName && newClass) {
+      forceUpdateStudent(currentSV.mssv, newName, newClass);
+    }
+  }
+
+  function enterStudentDash(svData) {
+    currentSV = svData;
+    document.getElementById('svNameDisp').innerText = svData.hoTen;
+    document.getElementById('svClassDisp').innerText = svData.lop;
+    hideEl('studentLoginBox'); showEl('studentDash');
+  }
+
+  // XỬ LÝ QUÉT QR CHO SINH VIÊN
+  function openStudentScanner() {
+    hideEl('studentDash'); showEl('scannerBox');
+    html5Scanner = new Html5Qrcode("reader");
+    html5Scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScanSuccess)
+      .catch(err => { alert('Lỗi mở Camera: ' + err); closeStudentScanner(); });
+  }
+
+  function closeStudentScanner() {
+    hideEl('scannerBox'); showEl('studentDash');
+    if (html5Scanner) html5Scanner.stop().then(() => html5Scanner.clear()).catch(e => console.log(e));
+  }
+
+  async function onScanSuccess(decodedText) {
+    closeStudentScanner();
+    const res = await callAPI({ action: 'processStudentScan', mssv: currentSV.mssv, deviceId: deviceId, qrData: decodedText });
+    if (res) {
+      document.getElementById('svStatus').innerText = res.message;
+      alert(res.message);
+    }
+  }
+
+  // XỬ LÝ ĐĂNG NHẬP CTV & TẠO QR ĐỘNG 5 GIÂY
+  async function handleCtvLogin() {
+    const u = document.getElementById('ctvUser').value.trim();
+    const p = document.getElementById('ctvPass').value.trim();
+    const res = await callAPI({ action: 'ctvLogin', username: u, password: p });
+
+    if (res && res.success) {
+      currentCTV = res;
+      document.getElementById('stationTitle').innerText = res.tenTram;
+      document.getElementById('ctvUserDisp').innerText = res.username;
+      hideEl('ctvLoginBox'); showEl('ctvDash');
+      
+      // Bắt đầu vòng lặp tạo QR 5 giây/lần
+      renderQR();
+      qrInterval = setInterval(renderQR, 5000);
+    } else if (res) {
+      alert(res.message);
+    }
+  }
+
+  async function renderQR() {
+    const res = await callAPI({ action: 'generateDynamicQR', tenTram: currentCTV.tenTram, loaiTram: currentCTV.loaiTram });
+    if (res && res.status === 'success') {
+      const container = document.getElementById('qrcodeContainer');
+      container.innerHTML = '';
+      new QRCode(container, { text: res.qrPayload, width: 220, height: 220 });
+    }
+  }
+</script>
+</body>
+</html>
