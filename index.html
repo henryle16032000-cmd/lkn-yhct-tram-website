@@ -43,21 +43,21 @@
 
   <!-- 1. FORM SINH VIÊN -->
   <div id="studentLoginBox">
-    <h2>THAM GIA NGÀY HỘI LKN 2026</h2>
+    <h2>NGÀY HỘI HỌC THUẬT VÀ THỬ THÁCH ANH TÀI LKN 2026</h2>
     <input type="text" id="svMssv" placeholder="Nhập MSSV">
     <input type="text" id="svHoTen" placeholder="Nhập Họ và Tên">
     <input type="text" id="svLop" placeholder="Nhập Lớp (Ví dụ: YHCT2023)">
     <button class="btn-main" onclick="handleStudentLogin()">Vào Hệ Thống</button>
-    <div class="role-switch" onclick="switchRole('ctv')">🔒 Dành cho Ban Tổ Chức / Trực trạm</div>
+    <div class="role-switch" onclick="switchRole('ctv')">🔐 Đăng nhập dành cho Ban Tổ Chức...</div>
   </div>
 
   <!-- 2. FORM CTV -->
   <div id="ctvLoginBox" class="hidden">
-    <h2>QUẢN LÝ TRẠM (CTV)</h2>
+    <h2>QUẢN LÝ TRẠM</h2>
     <input type="text" id="ctvUser" placeholder="Tài khoản CTV">
     <input type="password" id="ctvPass" placeholder="Mã PIN">
     <button class="btn-main" onclick="handleCtvLogin()">Đăng Nhập Trạm</button>
-    <div class="role-switch" onclick="switchRole('student')">⬅ Quay lại màn hình Sinh viên</div>
+    <div class="role-switch" onclick="switchRole('student')">⬅ Quay lại đăng nhập Sinh viên</div>
   </div>
 
   <!-- 3. DASHBOARD SINH VIÊN -->
@@ -72,14 +72,14 @@
   <!-- 4. DASHBOARD CTV (HIỂN THỊ QR ĐỘNG KHÔNG CẦN CHỜ SERVER) -->
   <div id="ctvDash" class="hidden">
     <h2 id="stationTitle">Tên Trạm</h2>
-    <p style="text-align:center; font-size:13px;">Mã QR tự thay đổi mỗi 5 giây để chống chụp ảnh gửi xa</p>
+    <p style="text-align:center; font-size:13px;">Mã QR sinh viên quét</p>
     <div id="qrcodeContainer"></div>
-    <p style="text-align:center; font-size:12px; color:#666;">Trực trạm: <b id="ctvUserDisp"></b></p>
+    <p style="text-align:center; font-size:12px; color:#000;">Trực trạm: <b id="ctvUserDisp"></b></p>
   </div>
 
   <!-- 5. KHUNG CAMERA QUÉT -->
   <div id="scannerBox" class="hidden">
-    <h3>ĐƯA CAMERA VÀO MÃ QR CỦA TRẠM</h3>
+    <h3>HÃY SCAN MÃ QR CỦA TRẠM</h3>
     <div id="reader" style="width:100%; margin:15px 0;"></div>
     <button class="btn-sub" onclick="closeStudentScanner()">Hủy Quét</button>
   </div>
