@@ -161,7 +161,18 @@
   function openScanner() {
     hide('dashboardScreen'); show('scannerScreen');
     html5QrcodeScanner = new Html5Qrcode("reader");
-    const config = { fps: 15, qrbox: { width: 280, height: 120 } };
+    
+    // Cấu hình tối ưu cho mã vạch 1D trên thẻ sinh viên
+    const config = { 
+      fps: 15, 
+      qrbox: { width: 280, height: 120 },
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.CODE_128, 
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.UPC_A
+      ]
+    };
     
     html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
       .catch(err => {
