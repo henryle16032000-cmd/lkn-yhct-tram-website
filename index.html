@@ -378,6 +378,9 @@
   function startCountdown5s() {
     if (timerInterval) clearInterval(timerInterval);
     
+    // GỌI VẼ QR NGAY LẬP TỨC KHI VỪA VÀO TRANG MÀ KHÔNG CẦN CHỜ ĐỢI
+    renderQRCode5s();
+    
     function tick() {
       try {
         if (!currentCTV) return;
@@ -393,6 +396,7 @@
           barEl.style.width = `${pct}%`;
         }
 
+        // Vẫn giữ cơ chế quét lại mã mới khi chạm mốc 5s
         if (secondsLeft === 5) {
           renderQRCode5s();
         }
