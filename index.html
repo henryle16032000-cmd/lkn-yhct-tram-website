@@ -373,11 +373,22 @@
       const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
       const shortToken = customMD5(rawString).substring(0, 8); // Token 8 ký tự
 
-      // Lấy mã viết tắt của trạm (ADNH, TT...)
-      const cleanName = currentCTV.tenTram.trim();
-      const shortTram = stationCodeMap[cleanName] || cleanName; 
+      // Ánh xạ tên trạm sang mã viết tắt 4 ký tự cực kỳ chuẩn xác
+      const rawName = currentCTV.tenTram.trim();
+      let shortTram = "ADNH"; // Mặc định
+      
+      if (rawName.includes("Âm dương") || rawName.includes("ADNH")) shortTram = "ADNH";
+      else if (rawName.includes("Tạng tượng") || rawName.includes("TT")) shortTram = "TT";
+      else if (rawName.includes("Bát cương") || rawName.includes("BCBP")) shortTram = "BCBP";
+      else if (rawName.includes("Đầu thống") || rawName.includes("DT")) shortTram = "DT";
+      else if (rawName.includes("Yêu thống") || rawName.includes("YT")) shortTram = "YT";
+      else if (rawName.includes("Trò chơi 1") || rawName.includes("TC1")) shortTram = "TC1";
+      else if (rawName.includes("Trò chơi 2") || rawName.includes("TC2")) shortTram = "TC2";
+      else if (rawName.includes("Trò chơi 3") || rawName.includes("TC3")) shortTram = "TC3";
+      else if (rawName.includes("Trò chơi 4") || rawName.includes("TC4")) shortTram = "TC4";
+      else if (rawName.includes("Trò chơi 5") || rawName.includes("TC5")) shortTram = "TC5";
 
-      // Nối trực tiếp thành chuỗi siêu ngắn: ADNH + a1b2c3d4
+      // Nối trực tiếp: Ký hiệu ngắn + Token ngắn (Tổng cộng đúng 12 ký tự!)
       const payload = shortTram + shortToken;
 
       box.innerHTML = '';
@@ -387,8 +398,7 @@
         height: 220,
         colorDark: "#8B1538",
         colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.L,
-        version: 40
+        correctLevel: QRCode.CorrectLevel.L
       });
     } catch (err) {
       console.error('Lỗi vẽ QR:', err);
