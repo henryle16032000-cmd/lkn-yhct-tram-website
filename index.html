@@ -340,70 +340,76 @@
     }
   }
 
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Không tải được: ' + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  // Nếu thư viện QR chưa có thì thử tải dự phòng
+  async function ensureQRLib() {
+    if (typeof QRCode !== 'undefined') return;
+    const urls = [
+      'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+      'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js'
+    ];
+    for (const u of urls) {
+      try { await loadScript(u); if (typeof QRCode !== 'undefined') return; }
+      catch (e) { console.warn(e.message); }
+    }
+  }
+
   function renderQRCode5s() {
+    if (!currentCTV) return;
+    const box = document.getElementById('qr-canvas-box');
     try {
-      if (!currentCTV) return;
-      const box = document.getElementById("qr-canvas-box");
-      if (!box) return;
-      box.innerHTML = "";
+      if (typeof QRCode === 'undefined')
+        throw new Error('Chưa tải được thư viện QR. Hãy kiểm tra mạng rồi tải lại trang.');
 
-      const currentBlock = Math.floor(Date.now() / 5000); 
-      const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
-      const token = customMD5(rawString); // Dùng hàm MD5 nội bộ
-
+      const block = Math.floor(Date.now() / 5000);
+      const token = customMD5(SECRET_KEY + '_' + currentCTV.tenTram + '_' + block);
       const payload = JSON.stringify({
         tram: currentCTV.tenTram,
         loai: currentCTV.loaiTram,
         token: token
       });
 
-      if (typeof QRCode !== 'undefined') {
-        new QRCode(box, {
-          text: payload,
-          width: 210,
-          height: 210,
-          colorDark: "#8B1538",
-          colorLight: "#ffffff",
-          correctLevel: QRCode.CorrectLevel.M
-        });
-      }
-    } catch(err) {
-      console.error("Lỗi vẽ QR:", err);
+      box.innerHTML = '';
+      new QRCode(box, {
+        text: payload, width: 210, height: 210,
+        colorDark: '#8B1538', colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } catch (err) {
+      console.error('Lỗi vẽ QR:', err);
+      box.innerHTML = '<div style="color:#b91c1c;font-size:13px;text-align:center;">⚠ ' + err.message + '</div>';
     }
   }
 
+  let lastBlock = -1;
+
   function startCountdown5s() {
     if (timerInterval) clearInterval(timerInterval);
-    
-    // GỌI VẼ QR NGAY LẬP TỨC KHI VỪA VÀO TRANG MÀ KHÔNG CẦN CHỜ ĐỢI
-    renderQRCode5s();
-    
+    lastBlock = -1;
+
     function tick() {
-      try {
-        if (!currentCTV) return;
-        const now = Date.now();
-        const secondsLeft = 5 - (Math.floor(now / 1000) % 5);
-        
-        const countEl = document.getElementById("time-countdown");
-        if (countEl) countEl.innerText = `${secondsLeft}s`;
+      if (!currentCTV) return;
+      const now = Date.now();
+      const secondsLeft = 5 - (Math.floor(now / 1000) % 5);
+      document.getElementById('time-countdown').innerText = secondsLeft + 's';
+      document.getElementById('progress-bar').style.width = (secondsLeft / 5 * 100) + '%';
 
-        const barEl = document.getElementById("progress-bar");
-        if (barEl) {
-          const pct = (secondsLeft / 5) * 100;
-          barEl.style.width = `${pct}%`;
-        }
-
-        // Vẫn giữ cơ chế quét lại mã mới khi chạm mốc 5s
-        if (secondsLeft === 5) {
-          renderQRCode5s();
-        }
-      } catch(err) {
-        console.error("Lỗi đếm ngược:", err);
-      }
+      // Chỉ vẽ lại khi sang khối 5 giây mới (không bao giờ bị bỏ lỡ)
+      const block = Math.floor(now / 5000);
+      if (block !== lastBlock) { lastBlock = block; renderQRCode5s(); }
     }
-    
+
     tick();
-    timerInterval = setInterval(tick, 500);
+    timerInterval = setInterval(tick, 250);
   }
 </script>
 </body>
