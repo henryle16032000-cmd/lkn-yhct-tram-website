@@ -360,26 +360,29 @@
     }
   }
 
-  // THANH ĐẾM NGƯỢC 5s CHẠY MƯỢT MÀ
   function startCountdown5s() {
     if (timerInterval) clearInterval(timerInterval);
     
     function tick() {
-      if (!currentCTV) return;
-      const now = Date.now();
-      const secondsLeft = 5 - (Math.floor(now / 1000) % 5);
-      
-      const countEl = document.getElementById("time-countdown");
-      if (countEl) countEl.innerText = `${secondsLeft}s`;
+      try {
+        if (!currentCTV) return;
+        const now = Date.now();
+        const secondsLeft = 5 - (Math.floor(now / 1000) % 5);
+        
+        const countEl = document.getElementById("time-countdown");
+        if (countEl) countEl.innerText = `${secondsLeft}s`;
 
-      const barEl = document.getElementById("progress-bar");
-      if (barEl) {
-        const pct = (secondsLeft / 5) * 100;
-        barEl.style.width = `${pct}%`;
-      }
+        const barEl = document.getElementById("progress-bar");
+        if (barEl) {
+          const pct = (secondsLeft / 5) * 100;
+          barEl.style.width = `${pct}%`;
+        }
 
-      if (secondsLeft === 5) {
-        renderQRCode15s();
+        if (secondsLeft === 5) {
+          renderQRCode5s();
+        }
+      } catch(err) {
+        console.error("Lỗi đếm ngược:", err);
       }
     }
     
