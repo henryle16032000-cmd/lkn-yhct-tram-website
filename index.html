@@ -33,14 +33,44 @@
     .btn-main { background: var(--primary); color: white; }
     .btn-sub { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
     .role-switch { text-align: center; margin-top: 15px; font-size: 13px; color: var(--primary); text-decoration: underline; cursor: pointer; }
-    .hidden { display: none; }
+    .hidden {
+      display: none !important;
+    }
+    .loader {
+     text-align: center;
+     color: var(--primary);
+     font-weight: bold;
+     font-size: 13px;
+     margin: 8px 0 15px;
+     padding: 8px;
+     background: rgba(255, 255, 255, 0.55);
+     border-radius: 8px;
+    }
 
-    #qr-canvas-box canvas,
+    #qr-canvas-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 250px;
+    height: 250px;
+    margin: 15px auto;
+    padding: 12px;
+
+    background: #FFFFFF;
+    border: 2px solid #222222;
+    border-radius: 8px;
+
+    box-sizing: border-box;
+    overflow: hidden;
+    }
+
     #qr-canvas-box img {
     display: block;
-    width: 220px;
-    height: 220px;
+    width: 220px !important;
+    height: 220px !important;
     max-width: 100%;
+    object-fit: contain;
     }
 
     /* THANH ĐẾM NGƯỢC 5 GIÂY */
@@ -63,8 +93,10 @@
 <body>
 
 <div class="card">
-  <div class="logo"><img src="https://lh3.googleusercontent.com/d/1pX-U4BcmFGPe6eBJL5FoXz-UHnUtg8p4"></div>
-  <div class="loader" id="loader">Đang xử lý...</div>
+  <div class="logo"><img src="https://lh3.googleusercontent.com/d/1pX-U4BcmFGPe6eBJL5FoXz-UHnUtg8p4">
+  </div>
+  <div class="loader hidden" id="loader">Đang xử lý...
+  </div>
 
   <!-- 1. FORM SINH VIÊN -->
   <div id="studentLoginBox">
@@ -435,8 +467,8 @@
             text: payload,
             width: 220,
             height: 220,
-            colorDark: "#8B1538",
-            colorLight: "#ffffff",
+            colorDark: "#A83D58",
+            colorLight: "#FFFFFF",
             correctLevel: QRCode.CorrectLevel.L
         });
 
