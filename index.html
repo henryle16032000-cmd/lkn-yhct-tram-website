@@ -328,31 +328,36 @@
     }
   }
 
-  // THUẬT TOÁN TẠO MÃ QR TẠI MÁY ĐỊA PHƯƠNG KHÔNG CẦN QUA SERVER
   function renderQRCode5s() {
-    if (!currentCTV) return;
-    const box = document.getElementById("qr-canvas-box");
-    if (!box) return;
-    box.innerHTML = "";
+    try {
+      if (!currentCTV) return;
+      const box = document.getElementById("qr-canvas-box");
+      if (!box) return;
+      box.innerHTML = "";
 
-    const currentBlock = Math.floor(Date.now() / 5000); // Khối 5 giây
-    const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
-    const token = md5(rawString); // Hàm MD5 mã hóa cực nhanh
+      const currentBlock = Math.floor(Date.now() / 5000); 
+      const rawString = SECRET_KEY + "_" + currentCTV.tenTram + "_" + currentBlock;
+      const token = customMD5(rawString); // Dùng hàm MD5 nội bộ
 
-    const payload = JSON.stringify({
-      tram: currentCTV.tenTram,
-      loai: currentCTV.loaiTram,
-      token: token
-    });
+      const payload = JSON.stringify({
+        tram: currentCTV.tenTram,
+        loai: currentCTV.loaiTram,
+        token: token
+      });
 
-    new QRCode(box, {
-      text: payload,
-      width: 210,
-      height: 210,
-      colorDark: "#8B1538",
-      colorLight: "#ffffff",
-      correctLevel: QRCode.CorrectLevel.M
-    });
+      if (typeof QRCode !== 'undefined') {
+        new QRCode(box, {
+          text: payload,
+          width: 210,
+          height: 210,
+          colorDark: "#8B1538",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+    } catch(err) {
+      console.error("Lỗi vẽ QR:", err);
+    }
   }
 
   // THANH ĐẾM NGƯỢC 5s CHẠY MƯỢT MÀ
