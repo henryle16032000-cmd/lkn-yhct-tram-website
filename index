@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no">
+  <title>Hệ Thống Trạm LKN 2026 - Khoa YHCT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Thư viện quét camera trực tiếp -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  
+  <style>
+    :root {
+      --primary-color: #8B1538; 
+      --secondary-color: #EAD5E7; 
+      --text-color: #333;
+      --font-body: 'Noto Sans', sans-serif;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-body); }
+    
+    body {
+      color: var(--text-color);
+      display: flex; justify-content: center; align-items: center;     
+      min-height: 100vh; margin: 0; padding: 15px;
+    }
+
+    body::before {
+      content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background-image: url('https://lh3.googleusercontent.com/d/1BZLMXU4JMVbQtJtNB9sMw5GSPTELRcfu');
+      background-size: cover; background-position: center; z-index: -1;
+    }
+
+    .overlay {
+      background-color: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      width: 100%; max-width: 450px; padding: 30px 20px;
+      border-radius: 20px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .header-logo { text-align: center; margin-bottom: 20px; }
+    .header-logo img { max-width: 160px; height: auto; }
+    h1, h2, h3 { color: var(--primary-color); text-align: center; margin-bottom: 15px;}
+
+    input {
+      width: 100%; padding: 12px; margin-bottom: 15px;
+      border: 2px solid var(--secondary-color); border-radius: 8px; font-size: 16px; outline: none;
+    }
+    input:focus { border-color: var(--primary-color); }
+    
+    button {
+      width: 100%; padding: 14px; margin-bottom: 10px;
+      border: none; border-radius: 8px; font-size: 16px; font-weight: bold;
+      cursor: pointer; transition: 0.3s;
+    }
+    
+    .btn-primary { background-color: var(--primary-color); color: white; }
+    .btn-warning { background-color: #f39c12; color: white; }
+    .btn-outline { background-color: transparent; border: 2px solid var(--primary-color); color: var(--primary-color); }
+    
+    #dashboardScreen, #scannerScreen { display: none; }
+    #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; border: 2px solid var(--primary-color); background: #fff;}
+    
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 100;
+    }
+    .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 350px; text-align: center; }
+    .modal-content h3 { color: #c0392b; margin-bottom: 10px; }
+    .loader { display: none; text-align: center; margin: 10px 0; color: var(--primary-color); font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<div class="overlay">
+  <div class="header-logo"><img src="https://lh3.googleusercontent.com/d/1pX-U4BcmFGPe6eBJL5FoXz-UHnUtg8p4" alt="Logo LKN"></div>
+
+  <div id="loginScreen">
+    <h2>HỆ THỐNG QUẢN LÝ TRẠM</h2>
+    <input type="text" id="username" placeholder="Tài khoản CTV">
+    <input type="password" id="password" placeholder="Mã PIN">
+    <button class="btn-primary" onclick="handleLogin()">Đăng Nhập</button>
+    <div class="loader" id="loginLoader">Đang kết nối server...</div>
+  </div>
+
+  <div id="dashboardScreen">
+    <h2 id="stationNameDisplay">Tên Trạm</h2>
+    <p style="text-align:center; margin-bottom: 20px; font-size: 14px;">Trực trạm: <b id="userDisplay"></b></p>
+    
+    <button class="btn-primary" onclick="openScanner()">📸 Mở Camera Quét Mã</button>
+    
+    <div style="margin: 20px 0; text-align: center; color: #888; font-size: 14px;">--- HOẶC ---</div>
+    <input type="text" id="manualMssv" placeholder="Nhập MSSV (Trường hợp quên thẻ)">
+    <button class="btn-outline" onclick="processManual()">Nhập Tay Check-in/out</button>
+    
+    <div class="loader" id="actionLoader">Đang đồng bộ dữ liệu...</div>
+    <div id="statusMessage" style="text-align:center; font-weight:bold; margin-top:15px; color: var(--primary-color); min-height: 40px;"></div>
+  </div>
+
+  <div id="scannerScreen">
+    <h3>ĐƯA MÃ VẠCH VÀO KHUNG</h3>
+    <div id="reader"></div>
+    <button class="btn-outline" onclick="closeScanner()">Trở về</button>
+  </div>
+</div>
+
+<div class="modal" id="warningModal">
+  <div class="modal-content">
+    <h3>⚠️ CẢNH BÁO TỐC ĐỘ</h3>
+    <p id="warningText" style="margin-bottom: 20px; line-height: 1.5;"></p>
+    <button class="btn-warning" onclick="confirmForceCheckout()">Xác nhận Thông Trạm</button>
+    <button class="btn-outline" onclick="closeModal()">Hủy (Chưa cho qua)</button>
+  </div>
+</div>
+
+<script>
+  // QUAN TRỌNG: Dán link Web App của Google Apps Script vào đây
+  const API_URL = 'DÁN_LINK_GOOGLE_APPS_SCRIPT_CỦA_BẠN_VÀO_ĐÂY';
+
+  let currentStation = {};
+  let html5QrcodeScanner = null;
+  let pendingCheckout = null;
+
+  function show(id) { document.getElementById(id).style.display = 'block'; }
+  function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+  // Hàm kết nối API 
+  async function callAPI(payload, loaderId) {
+    show(loaderId);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Dùng text/plain để vượt lỗi CORS của Google
+        body: JSON.stringify(payload)
+      });
+      const data = await response.json();
+      hide(loaderId);
+      return data;
+    } catch (error) {
+      hide(loaderId);
+      alert("Lỗi máy chủ! Vui lòng thử lại. Chi tiết: " + error.message);
+      return null;
+    }
+  }
+
+  async function handleLogin() {
+    const user = document.getElementById('username').value.trim();
+    const pass = document.getElementById('password').value.trim();
+    if(!user || !pass) return alert('Nhập đủ thông tin!');
+    
+    const res = await callAPI({ action: 'login', username: user, password: pass }, 'loginLoader');
+    if (res && res.success) {
+      currentStation = res;
+      document.getElementById('stationNameDisplay').innerText = res.tenTram;
+      document.getElementById('userDisplay').innerText = res.username;
+      hide('loginScreen'); show('dashboardScreen');
+    } else if (res) {
+      alert(res.message);
+    }
+  }
+
+  function openScanner() {
+    hide('dashboardScreen'); show('scannerScreen');
+    html5QrcodeScanner = new Html5Qrcode("reader");
+    const config = { fps: 15, qrbox: { width: 280, height: 120 } };
+    
+    html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
+      .catch(err => {
+        alert("Lỗi Camera: " + err); closeScanner();
+      });
+  }
+
+  function closeScanner() {
+    hide('scannerScreen'); show('dashboardScreen');
+    if(html5QrcodeScanner) {
+      html5QrcodeScanner.stop().then(() => html5QrcodeScanner.clear()).catch(e => console.log(e));
+    }
+  }
+
+  function onScanSuccess(decodedText) {
+    closeScanner();
+    submitData(decodedText, 'Quét mã');
+  }
+
+  function processManual() {
+    const mssv = document.getElementById('manualMssv').value.trim();
+    if(!mssv) return alert('Nhập MSSV!');
+    submitData(mssv, 'Nhập tay');
+  }
+
+  async function submitData(mssv, phuongThuc) {
+    document.getElementById('statusMessage').innerText = '';
+    const payload = {
+      action: 'processScan', mssv: mssv, 
+      tenTram: currentStation.tenTram, loaiTram: currentStation.loaiTram, 
+      username: currentStation.username, phuongThuc: phuongThuc
+    };
+
+    const res = await callAPI(payload, 'actionLoader');
+    if (!res) return;
+
+    if(res.status === 'warning_time') {
+      pendingCheckout = res;
+      document.getElementById('warningText').innerText = `Sinh viên ${res.hoTen} hoàn thành trạm trong ${res.time} giây (< 5 phút). Đảm bảo tính trung thực?`;
+      document.getElementById('warningModal').style.display = 'flex';
+    } else if (res.status === 'error') {
+      alert(res.message);
+    } else {
+      document.getElementById('statusMessage').innerText = res.hoTen + " - " + res.message;
+      document.getElementById('manualMssv').value = '';
+    }
+  }
+
+  async function confirmForceCheckout() {
+    closeModal();
+    const payload = { action: 'forceCheckout', row: pendingCheckout.row, time: pendingCheckout.time };
+    const res = await callAPI(payload, 'actionLoader');
+    if (res) {
+      document.getElementById('statusMessage').innerText = pendingCheckout.hoTen + " - " + res.message;
+      pendingCheckout = null;
+    }
+  }
+
+  function closeModal() { document.getElementById('warningModal').style.display = 'none'; }
+</script>
+</body>
+</html>
