@@ -233,6 +233,55 @@
     if (res) { document.getElementById('svStatus').innerText = res.message; alert(res.message); }
   }
 
+  let pendingConfirmData = null; // Biến lưu tạm dữ liệu để xác nhận
+  async function onScanSuccess(decodedText) {
+    closeStudentScanner();
+    const res = await callAPI({ action: 'processStudentScan', mssv: currentSV.mssv, deviceId: deviceId, qrData: decodedText });
+  
+    if (res) {
+      if (res.status === 'warning_time') {
+        // Hiện cảnh báo và mở hộp thoại nhập PIN của CTV
+        document.getElementById('svStatus').innerHTML = `<span style="color:#d97706;">⚠ ${res.message}</span>`;
+        document.getElementById('confirmMsg').innerText = `Sinh viên ${res.hoTen} vượt trạm sớm. CTV vui lòng nhập mật khẩu trạm để xác nhận đặc cách.`;
+      
+        // Lưu lại dòng đang chơi để gửi lên server cập nhật
+        pendingConfirmData = {
+          action: 'forceCheckout',
+          row: res.row,
+          diffSeconds: res.time
+        };
+      
+        showEl('ctvConfirmBox');
+      } else {
+        // Thành công hoặc lỗi bình thường
+        document.getElementById('svStatus').innerText = res.message;
+        alert(res.message);
+      }
+    }
+  }
+
+  function cancelConfirm() {
+    hideEl('ctvConfirmBox');
+    pendingConfirmData = null;
+    document.getElementById('confirmPin').value = '';
+  }
+
+  async function submitCtvConfirm() {
+    const pin = document.getElementById('confirmPin').value.trim();
+    if (!pin) return alert("Vui lòng nhập mật khẩu xác nhận!");
+  
+    pendingConfirmData.pin = pin; // Đính kèm mã PIN CTV vừa nhập
+  
+    const res = await callAPI(pendingConfirmData);
+    if (res) {
+      alert(res.message);
+      if (res.status === 'success') {
+        cancelConfirm();
+        document.getElementById('svStatus').innerHTML = `<span style="color:green;">✅ ${res.message}</span>`;
+      }
+    }
+  }
+
   async function handleCtvLogin() {
     const u = document.getElementById('ctvUser').value.trim();
     const p = document.getElementById('ctvPass').value.trim();
