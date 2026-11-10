@@ -91,6 +91,15 @@
     </div>
     <p style="text-align:center; font-size:12px; color:#000; margin-top:15px;">Trực trạm: <b id="ctvUserDisp"></b></p>
 
+<!-- HỘP THOẠI XÁC NHẬN CỦA CTV -->
+<div id="ctvConfirmBox" class="hidden" style="margin-top: 15px; padding: 15px; border: 2px dashed #d97706; border-radius: 8px; background: rgba(255, 255, 255, 0.9);">
+  <h3 style="color: #d97706; margin-bottom: 10px;">XÁC NHẬN ĐẶC CÁCH</h3>
+  <p id="confirmMsg" style="font-size: 13px; margin-bottom: 10px; color: #333;"></p>
+  <input type="password" id="confirmPin" placeholder="CTV nhập mật khẩu trạm vào đây..." style="border-color: #d97706;">
+  <button class="btn-main" style="background: #d97706;" onclick="submitCtvConfirm()">Xác nhận Hoàn thành</button>
+  <button class="btn-sub" onclick="cancelConfirm()">Hủy bỏ</button>
+</div>
+
     <!-- FORM RESET THIẾT BỊ DÀNH CHO CTV -->
     <div class="reset-box">
       <h3>🛠 HỖ TRỢ GỠ LỖI THIẾT BỊ</h3>
