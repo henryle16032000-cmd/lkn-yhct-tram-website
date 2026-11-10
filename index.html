@@ -124,11 +124,16 @@
   const API_URL = 'https://script.google.com/macros/s/AKfycbw00XDVHM1GcryUjL-nbPTe_0esX7HTUzjMlmBy3RhXhQa-Ftm17x45A8_XzLBneUdf/exec';
   const SECRET_KEY = "LKN26_YHCT_SECRET_KEY_2026"; 
   const stationCodeMap = {
-    "ADNH": { name: "Trạm Âm dương - Ngũ hành" }, "TT": { name: "Trạm Tạng tượng" },
-    "BCBP": { name: "Trạm Bát cương - Bát pháp" }, "DT": { name: "Trạm Đầu thống" },
-    "YT": { name: "Trạm Yêu thống" }, "NBB": { name: "Trạm Nhảy bao bố" },
-    "ND": { name: "Trạm Nhảy dây" }, "BB": { name: "Trạm Bắn bi" },
-    "NV": { name: "Trạm Ném vòng" }, "XH": { name: "Trạm Xếp hình" }
+    "ADNH": { name: "Trạm Âm dương - Ngũ hành" },
+    "TT":   { name: "Trạm Tạng tượng" },
+    "BCBP": { name: "Trạm Bát cương - Bát pháp" },
+    "DT":   { name: "Trạm Đầu thống" },
+    "YT":   { name: "Trạm Yêu thống" },
+    "NBB":  { name: "Trạm Nhảy bao bố" },
+    "ND":   { name: "Trạm Nhảy dây" },
+    "BB":   { name: "Trạm Bắn bi" },
+    "NV":   { name: "Trạm Ném vòng" },
+    "XH":   { name: "Trạm Xếp hình" }
   };
 
   function getStationCode(tenTram) {
@@ -147,6 +152,7 @@
   }
 
   let currentSV = null, currentCTV = null, timerInterval = null, html5Scanner = null;
+  let pendingConfirmData = null;
 
   function showEl(id) { document.getElementById(id).classList.remove('hidden'); }
   function hideEl(id) { document.getElementById(id).classList.add('hidden'); }
@@ -178,9 +184,8 @@
     if (res.status === 'success') {
       enterStudentDash(res.student);
     } else if (res.status === 'confirm_kick') {
-      // Hỏi ý kiến sinh viên nếu bị trùng phiên đăng nhập
       if (confirm(res.message)) {
-        handleStudentLogin(true); // Gửi cờ force=true để ép xóa phiên cũ
+        handleStudentLogin(true);
       }
     } else {
       alert(res.message);
@@ -198,7 +203,7 @@
 
     const res = await callAPI({ action: 'resetDevice', mssv: mssv, hoTen: hoTen, lop: lop });
     if (res) {
-      alert(res.message); // In thông báo cảnh báo chi tiết hoặc thành công
+      alert(res.message);
       if (res.success) {
         document.getElementById('resetMssv').value = "";
         document.getElementById('resetHoTen').value = "";
@@ -229,21 +234,12 @@
   async function onScanSuccess(decodedText) {
     closeStudentScanner();
     const res = await callAPI({ action: 'processStudentScan', mssv: currentSV.mssv, deviceId: deviceId, qrData: decodedText });
-    if (res) { document.getElementById('svStatus').innerText = res.message; alert(res.message); }
-  }
-
-  let pendingConfirmData = null; // Biến lưu tạm dữ liệu để xác nhận
-  async function onScanSuccess(decodedText) {
-    closeStudentScanner();
-    const res = await callAPI({ action: 'processStudentScan', mssv: currentSV.mssv, deviceId: deviceId, qrData: decodedText });
   
     if (res) {
       if (res.status === 'warning_time') {
-        // Hiện cảnh báo và mở hộp thoại nhập PIN của CTV
         document.getElementById('svStatus').innerHTML = `<span style="color:#d97706;">⚠ ${res.message}</span>`;
         document.getElementById('confirmMsg').innerText = `Sinh viên ${res.hoTen} vượt trạm sớm. CTV vui lòng nhập mật khẩu trạm để xác nhận đặc cách.`;
       
-        // Lưu lại dòng đang chơi để gửi lên server cập nhật
         pendingConfirmData = {
           action: 'forceCheckout',
           row: res.row,
@@ -252,7 +248,6 @@
       
         showEl('ctvConfirmBox');
       } else {
-        // Thành công hoặc lỗi bình thường
         document.getElementById('svStatus').innerText = res.message;
         alert(res.message);
       }
@@ -269,7 +264,7 @@
     const pin = document.getElementById('confirmPin').value.trim();
     if (!pin) return alert("Vui lòng nhập mật khẩu xác nhận!");
   
-    pendingConfirmData.pin = pin; // Đính kèm mã PIN CTV vừa nhập
+    pendingConfirmData.pin = pin;
   
     const res = await callAPI(pendingConfirmData);
     if (res) {
