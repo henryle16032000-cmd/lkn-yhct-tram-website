@@ -73,7 +73,7 @@
     object-fit: contain;
     }
 
-    /* THANH ĐẾM NGƯỢC 5 GIÂY */
+    /* THANH ĐẾM NGƯỢC 10 GIÂY */
     .timer-bar-bg { width: 100%; background-color: #e2e8f0; height: 8px; border-radius: 9999px; overflow: hidden; margin-top: 8px; }
     .timer-bar-fill { background: linear-gradient(to right, #8B1538, #d97706); height: 100%; width: 100%; transition: width 0.3s linear; }
 
@@ -126,7 +126,7 @@
     <div id="svStatus" style="text-align:center; font-weight:bold; margin-top:15px; color:var(--primary);"></div>
   </div>
 
-  <!-- 4. DASHBOARD CTV (HIỂN THỊ MÃ QR ĐỔI MỖI 5 GIÂY) -->
+  <!-- 4. DASHBOARD CTV (HIỂN THỊ MÃ QR ĐỔI MỖI 10 GIÂY) -->
   <div id="ctvDash" class="hidden">
     <h2 id="stationTitle">Tên Trạm</h2>
 
@@ -135,7 +135,7 @@
     <div style="margin-top: 10px;">
       <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold; color:#475569;">
         <span>Tự đổi mã sau:</span>
-        <span id="time-countdown" style="color:var(--primary);">5s</span>
+        <span id="time-countdown" style="color:var(--primary);">10s</span>
       </div>
       <div class="timer-bar-bg">
         <div id="progress-bar" class="timer-bar-fill"></div>
@@ -409,13 +409,13 @@
       hideEl('ctvLoginBox'); showEl('ctvDash');
       document.getElementById('qr-canvas-box').innerText = 'Đang khởi tạo...';
 
-      startCountdown5s();
+      startCountdown10s();
     } else if (res) {
       alert(res.message);
     }
   }
 
-  function renderQRCode5s() {
+  function renderQRCode10s() {
     if (!currentCTV) return;
 
     const box = document.getElementById('qr-canvas-box');
@@ -442,8 +442,8 @@
         // Tìm mã viết tắt của trạm
         const shortTram = getStationCode(tenTram);
 
-        // Xác định chu kỳ 5 giây
-        const currentBlock = Math.floor(Date.now() / 5000);
+        // Xác định chu kỳ 10 giây (chia cho 10000 ms)
+        const currentBlock = Math.floor(Date.now() / 10000);
 
         // Giữ nguyên công thức tạo token hiện tại
         const rawString =
@@ -489,7 +489,7 @@
 
   let lastBlock = -1;
 
-  function startCountdown5s() {
+  function startCountdown10s() {
     if (timerInterval) clearInterval(timerInterval);
     lastBlock = -1;
 
@@ -497,18 +497,19 @@
       try {
         if (!currentCTV) return;
         const now = Date.now();
-        const secondsLeft = 5 - (Math.floor(now / 1000) % 5);
+      
+        const secondsLeft = 10 - (Math.floor(now / 1000) % 10);
 
         const countEl = document.getElementById("time-countdown");
         if (countEl) countEl.innerText = `${secondsLeft}s`;
 
         const barEl = document.getElementById("progress-bar");
-        if (barEl) barEl.style.width = `${(secondsLeft / 5) * 100}%`;
+        if (barEl) barEl.style.width = `${(secondsLeft / 10) * 100}%`;
 
-        const block = Math.floor(now / 5000);
+        const block = Math.floor(now / 10000);
         if (block !== lastBlock) {
           lastBlock = block;
-          renderQRCode5s();
+          renderQRCode10s();
         }
       } catch(err) {
         console.error("Lỗi đếm ngược:", err);
