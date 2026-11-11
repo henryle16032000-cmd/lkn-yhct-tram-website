@@ -23,7 +23,8 @@
       border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 8px 32px rgba(0,0,0,0.15);
     }
     .logo { text-align: center; margin-bottom: 15px; } .logo img { max-width: 140px; }
-    h2, h3 { color: var(--primary); text-align: center; margin-bottom: 15px; }
+    h2, h3 { color: var(--primary); text-align: center; margin-bottom: 15px; line-height: 1.35; }
+    #studentLoginBox h2 { font-size: 18px; }
     input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 2px solid #EAD5E7; border-radius: 8px; font-size: 15px; outline: none; background: #fff; }
     input:focus, select:focus { border-color: var(--primary); }
     button { width: 100%; padding: 13px; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; margin-bottom: 10px; }
@@ -33,17 +34,17 @@
     .hidden { display: none !important; }
     .loader { text-align: center; color: var(--primary); font-weight: bold; font-size: 13px; margin: 8px 0 15px; padding: 8px; background: rgba(255, 255, 255, 0.55); border-radius: 8px; }
 
-    /* KHUNG QR KÈM WATERMARK 30% (ĐÃ CẬP NHẬT ID ẢNH MỚI CỦA BẠN) */
+    /* KHUNG QR KÈM WATERMARK 30% */
     #qr-canvas-box { 
       position: relative; display: flex; justify-content: center; align-items: center; 
-      width: 350px; height: 350px; margin: 15px auto; padding: 12px; 
+      width: 250px; height: 250px; margin: 15px auto; padding: 12px; 
       background: #FFFFFF; border: 2px solid #222222; border-radius: 8px; 
       box-sizing: border-box; overflow: hidden; 
     }
     #qr-canvas-box::before {
       content: ""; position: absolute; inset: 0;
       background: url('https://lh3.googleusercontent.com/d/1Q2YEv6D7bIg6i47ORc8pdiiN2aKJcuKI') center/72% no-repeat;
-      opacity: 0.3; /* Độ mờ 30% */
+      opacity: 0.3;
       pointer-events: none; z-index: 1;
     }
     #qr-canvas-box img, #qr-canvas-box canvas { 
@@ -100,7 +101,7 @@
 
   <!-- 1. FORM SINH VIÊN -->
   <div id="studentLoginBox">
-    <h2>NGÀY HỘI HỌC THUẬT & THỬ THÁCH ANH TÀI</h2>
+    <h2>NGÀY LỄ CHÍNH LỄ KẾT NGHĨA LĨNH KHOA Y HỌC CỔ TRUYỀN NĂM 2026</h2>
     <input type="text" id="svMssv" placeholder="Nhập MSSV">
     <input type="text" id="svHoTen" placeholder="Nhập Họ và Tên">
     <input type="text" id="svLop" placeholder="Nhập Lớp (Ví dụ: YHCT24)">
@@ -108,12 +109,12 @@
     <div class="role-switch" onclick="switchRole('ctv')">🔐 Đăng nhập dành cho Ban Tổ Chức...</div>
   </div>
 
-  <!-- 2. FORM CTV -->
+  <!-- 2. FORM BAN TỔ CHỨC (CTV) -->
   <div id="ctvLoginBox" class="hidden">
-    <h2>QUẢN LÝ TRẠM</h2>
+    <h2>ĐĂNG NHẬP BAN TỔ CHỨC</h2>
     <input type="text" id="ctvUser" placeholder="ID Tài khoản đã cấp">
     <input type="password" id="ctvPass" placeholder="Password">
-    <button class="btn-main" onclick="handleCtvLogin()">Đăng Nhập Trạm</button>
+    <button class="btn-main" onclick="handleCtvLogin()">Đăng nhập</button>
     <div class="role-switch" onclick="switchRole('student')">⬅ Quay lại Đăng nhập Sinh viên</div>
   </div>
 
@@ -121,7 +122,7 @@
   <div id="studentDash" class="hidden">
     <h2>CHÀO MỪNG BẠN</h2>
     <p style="text-align:center; margin-bottom:15px;"><b id="svNameDisp"></b> - <span id="svClassDisp"></span></p>
-    <button class="btn-main" onclick="openStudentScanner()">📸 Quét Mã QR Tại Trạm</button>
+    <button class="btn-main" onclick="openStudentScanner()">📸 Quét mã QR</button>
     <div id="svStatus" style="text-align:center; font-weight:bold; margin-top:15px; color:var(--primary);"></div>
     <!-- HỘP THOẠI XÁC NHẬN CỦA CTV -->
     <div id="ctvConfirmBox" class="hidden" style="margin-top: 15px; padding: 15px; border: 2px dashed #d97706; border-radius: 8px; background: rgba(255, 255, 255, 0.9);">
@@ -158,17 +159,17 @@
       <div id="supportDropdownBody" class="dropdown-body hidden">
         <!-- BỘ CHỌN CHỈ HIỂN THỊ 1 TRONG 2 TÍNH NĂNG -->
         <select id="supportFeatureSelect" class="feature-select" onchange="switchSupportFeature()">
-          <option value="checkin">⚡ 1. Điểm danh hỗ trợ sinh viên quên mang thiết bị để quét mã</option>
-          <option value="reset">🛠 2. Hỗ trợ gỡ lỗi đăng nhập thiết bị</option>
+          <option value="checkin">⚡ 1. Điểm danh hỗ trợ (Hư máy / Hết pin)</option>
+          <option value="reset">🛠 2. Hỗ trợ gỡ lỗi thiết bị (Đổi điện thoại)</option>
         </select>
 
         <!-- TÍNH NĂNG 1: ĐIỂM DANH HỖ TRỢ KÈM CHỤP ẢNH -->
         <div id="panelSupportCheckin" class="support-panel">
-          <p><b>Check-in:</b> Nhập MSSV + Chụp ảnh Mặt SV & Thẻ SV)<br><b>Check-out:</b> Chỉ cần nhập lại MSSV</p>
-          <input type="text" id="supportMssv" placeholder="Nhập MSSV cần hỗ trợ tại trạm">
+          <p><b>Check-in:</b> Nhập MSSV + Chụp ảnh (Mặt SV & Thẻ SV)<br><b>Check-out:</b> Chỉ cần nhập lại MSSV và bấm nút</p>
+          <input type="text" id="supportMssv" placeholder="Nhập MSSV cần hỗ trợ">
           
           <label class="photo-label" for="supportPhotoInput" id="photoLabelText">
-            📷 Chụp ảnh Thẻ SV & Mặt SV (chỉ Check-in)
+            📷 Chụp ảnh Thẻ SV & Mặt SV (Khi Check-in)
           </label>
           <input type="file" id="supportPhotoInput" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoSelect(event)">
           
@@ -177,7 +178,7 @@
             <div style="font-size:11px; color:#15803d; font-weight:bold; margin-top:4px;">✔ Đã đính kèm ảnh minh chứng</div>
           </div>
 
-          <button class="btn-main" style="margin-bottom:0;" onclick="handleSupportCheckin(false)">Xác nhận Check-in / Check-out</button>
+          <button class="btn-main" style="margin-bottom:0;" onclick="handleSupportCheckin(false)">Xác nhận Điểm danh</button>
         </div>
 
         <!-- TÍNH NĂNG 2: FORM RESET THIẾT BỊ -->
@@ -194,12 +195,12 @@
 
   <!-- 5. KHUNG CAMERA QUÉT -->
   <div id="scannerBox" class="hidden">
-    <h3>HÃY QUÉT MÃ QR CỦA TRẠM</h3>
+    <h3>HÃY QUÉT MÃ QR CỦA BAN TỔ CHỨC</h3>
     <div id="reader" style="width:100%; margin:15px 0;"></div>
     <button class="btn-sub" onclick="closeStudentScanner()">Hủy Quét</button>
   </div>
 
-  <div class="dev-credit">This website was developed by Thanh Hai</div>
+  <div class="dev-credit">This website was developed by Le Thanh Hai</div>
 </div>
 
 <script>
@@ -215,7 +216,9 @@
     "ND":   { name: "Trạm Nhảy dây" },
     "BB":   { name: "Trạm Bắn bi" },
     "NV":   { name: "Trạm Ném vòng" },
-    "XH":   { name: "Trạm Xếp hình" }
+    "XH":   { name: "Trạm Xếp hình" },
+    "NLTT": { name: "Nghi lễ truyền thống" },
+    "DVN":  { name: "Đêm văn nghệ" }
   };
 
   function getStationCode(tenTram) {
@@ -243,7 +246,6 @@
     else { hideEl('ctvLoginBox'); showEl('studentLoginBox'); }
   }
 
-  // ĐÓNG / MỞ THANH THẢ XUỐNG
   function toggleSupportDropdown() {
     const body = document.getElementById('supportDropdownBody');
     const arrow = document.getElementById('dropdownArrow');
@@ -256,7 +258,6 @@
     }
   }
 
-  // CHUYỂN ĐỔI GIỮA 2 TÍNH NĂNG TRONG THANH THẢ XUỐNG
   function switchSupportFeature() {
     const selected = document.getElementById('supportFeatureSelect').value;
     if (selected === 'checkin') {
@@ -336,7 +337,7 @@
     if (!res) return;
 
     if (res.status === 'warning_time') {
-      if (confirm(`⚠ ${res.message}\n\nBạn có muốn xác nhận hoàn thành sớm cho sinh viên ${res.hoTen} không?`)) {
+      if (confirm(`⚠ ${res.message}\n\nBạn có muốn xác nhận ĐẶC CÁCH hoàn thành sớm cho sinh viên ${res.hoTen} không?`)) {
         handleSupportCheckin(true);
       }
     } else {
@@ -413,7 +414,7 @@
     if (res) {
       if (res.status === 'warning_time') {
         document.getElementById('svStatus').innerHTML = `<span style="color:#d97706;">⚠ ${res.message}</span>`;
-        document.getElementById('confirmMsg').innerText = `Sinh viên ${res.hoTen} vượt trạm sớm. CTV vui lòng nhập mật khẩu của mình để xác nhận đặc cách cho sinh viên qua trạm sớm.`;
+        document.getElementById('confirmMsg').innerText = `Sinh viên ${res.hoTen} vượt trạm sớm. CTV vui lòng nhập mật khẩu trạm để xác nhận đặc cách.`;
       
         pendingConfirmData = {
           action: 'forceCheckout',
