@@ -36,7 +36,7 @@
     /* KHUNG QR KÈM WATERMARK 30% (ĐÃ CẬP NHẬT ID ẢNH MỚI CỦA BẠN) */
     #qr-canvas-box { 
       position: relative; display: flex; justify-content: center; align-items: center; 
-      width: 250px; height: 250px; margin: 15px auto; padding: 12px; 
+      width: 350px; height: 350px; margin: 15px auto; padding: 12px; 
       background: #FFFFFF; border: 2px solid #222222; border-radius: 8px; 
       box-sizing: border-box; overflow: hidden; 
     }
@@ -158,17 +158,17 @@
       <div id="supportDropdownBody" class="dropdown-body hidden">
         <!-- BỘ CHỌN CHỈ HIỂN THỊ 1 TRONG 2 TÍNH NĂNG -->
         <select id="supportFeatureSelect" class="feature-select" onchange="switchSupportFeature()">
-          <option value="checkin">⚡ 1. Điểm danh hỗ trợ (Hư máy / Hết pin)</option>
-          <option value="reset">🛠 2. Hỗ trợ gỡ lỗi thiết bị (Đổi điện thoại)</option>
+          <option value="checkin">⚡ 1. Điểm danh hỗ trợ sinh viên quên mang thiết bị để quét mã</option>
+          <option value="reset">🛠 2. Hỗ trợ gỡ lỗi đăng nhập thiết bị</option>
         </select>
 
         <!-- TÍNH NĂNG 1: ĐIỂM DANH HỖ TRỢ KÈM CHỤP ẢNH -->
         <div id="panelSupportCheckin" class="support-panel">
-          <p><b>Check-in:</b> Nhập MSSV + Chụp ảnh (Mặt SV & Thẻ SV)<br><b>Check-out:</b> Chỉ cần nhập lại MSSV và bấm nút</p>
+          <p><b>Check-in:</b> Nhập MSSV + Chụp ảnh Mặt SV & Thẻ SV)<br><b>Check-out:</b> Chỉ cần nhập lại MSSV</p>
           <input type="text" id="supportMssv" placeholder="Nhập MSSV cần hỗ trợ tại trạm">
           
           <label class="photo-label" for="supportPhotoInput" id="photoLabelText">
-            📷 Chụp ảnh Thẻ SV & Mặt SV (Khi Check-in)
+            📷 Chụp ảnh Thẻ SV & Mặt SV (chỉ Check-in)
           </label>
           <input type="file" id="supportPhotoInput" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoSelect(event)">
           
@@ -199,7 +199,7 @@
     <button class="btn-sub" onclick="closeStudentScanner()">Hủy Quét</button>
   </div>
 
-  <div class="dev-credit">This website was developed by Le Thanh Hai</div>
+  <div class="dev-credit">This website was developed by Thanh Hai</div>
 </div>
 
 <script>
@@ -336,7 +336,7 @@
     if (!res) return;
 
     if (res.status === 'warning_time') {
-      if (confirm(`⚠ ${res.message}\n\nBạn có muốn xác nhận ĐẶC CÁCH hoàn thành sớm cho sinh viên ${res.hoTen} không?`)) {
+      if (confirm(`⚠ ${res.message}\n\nBạn có muốn xác nhận hoàn thành sớm cho sinh viên ${res.hoTen} không?`)) {
         handleSupportCheckin(true);
       }
     } else {
@@ -413,7 +413,7 @@
     if (res) {
       if (res.status === 'warning_time') {
         document.getElementById('svStatus').innerHTML = `<span style="color:#d97706;">⚠ ${res.message}</span>`;
-        document.getElementById('confirmMsg').innerText = `Sinh viên ${res.hoTen} vượt trạm sớm. CTV vui lòng nhập mật khẩu trạm để xác nhận đặc cách.`;
+        document.getElementById('confirmMsg').innerText = `Sinh viên ${res.hoTen} vượt trạm sớm. CTV vui lòng nhập mật khẩu của mình để xác nhận đặc cách cho sinh viên qua trạm sớm.`;
       
         pendingConfirmData = {
           action: 'forceCheckout',
