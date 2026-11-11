@@ -39,10 +39,17 @@
     .timer-bar-fill { background: linear-gradient(to right, #8B1538, #d97706); height: 100%; width: 100%; transition: width 0.3s linear; }
     .dev-credit { text-align: center; font-size: 13px; color: var(--primary); margin-top: 25px; font-weight: 800; font-style: italic; letter-spacing: 0.5px; text-shadow: 0px 1px 3px rgba(255, 255, 255, 0.9); }
     
-    .reset-box { margin-top: 25px; padding-top: 15px; border-top: 2px dashed #8B1538; }
+    .reset-box { margin-top: 22px; padding-top: 15px; border-top: 2px dashed #8B1538; }
     .reset-box h3 { font-size: 14px; margin-bottom: 5px; }
-    .reset-box p { font-size: 11px; text-align: center; color: #475569; margin-bottom: 12px; }
-    .reset-box input { padding: 10px; font-size: 13px; border: 1px solid #ccc; }
+    .reset-box p { font-size: 11px; text-align: center; color: #475569; margin-bottom: 10px; }
+    .reset-box input[type="text"] { padding: 10px; font-size: 13px; border: 1px solid #ccc; }
+    .photo-label {
+      display: block; width: 100%; padding: 10px; margin-bottom: 10px; text-align: center;
+      background: rgba(255,255,255,0.85); border: 1.5px dashed var(--primary); border-radius: 8px;
+      color: var(--primary); font-size: 13px; font-weight: bold; cursor: pointer;
+    }
+    #photoPreviewBox { text-align: center; margin-bottom: 10px; }
+    #photoPreviewBox img { max-width: 140px; max-height: 140px; border-radius: 8px; border: 2px solid var(--primary); object-fit: cover; }
   </style>
 </head>
 <body>
@@ -99,10 +106,29 @@
     </div>
     <p style="text-align:center; font-size:12px; color:#000; margin-top:15px;">Trực trạm: <b id="ctvUserDisp"></b></p>
 
-    <!-- FORM RESET THIẾT BỊ DÀNH CHO CTV -->
+    <!-- KHU VỰC 1: ĐIỂM DANH HỖ TRỢ KÈM CHỤP ẢNH MINH CHỨNG -->
+    <div class="reset-box">
+      <h3>⚡ ĐIỂM DANH HỖ TRỢ (SV HƯ MÁY / HẾT PIN)</h3>
+      <p><b>Check-in:</b> Nhập MSSV + Chụp ảnh (Mặt SV & Thẻ SV)<br><b>Check-out:</b> Chỉ cần nhập lại MSSV và bấm nút</p>
+      <input type="text" id="supportMssv" placeholder="Nhập MSSV cần hỗ trợ tại trạm">
+      
+      <label class="photo-label" for="supportPhotoInput" id="photoLabelText">
+        📷 Chụp ảnh Thẻ SV & Mặt SV (Khi Check-in)
+      </label>
+      <input type="file" id="supportPhotoInput" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoSelect(event)">
+      
+      <div id="photoPreviewBox" class="hidden">
+        <img id="photoPreviewImg" src="">
+        <div style="font-size:11px; color:#15803d; font-weight:bold; margin-top:4px;">✔ Đã đính kèm ảnh minh chứng</div>
+      </div>
+
+      <button class="btn-main" onclick="handleSupportCheckin(false)">Xác nhận Check-in / Check-out</button>
+    </div>
+
+    <!-- KHU VỰC 2: FORM RESET THIẾT BỊ DÀNH CHO CTV -->
     <div class="reset-box">
       <h3>🛠 HỖ TRỢ GỠ LỖI THIẾT BỊ</h3>
-      <p>Dùng để gỡ mã thiết bị cũ khi sinh viên hết pin / đổi điện thoại</p>
+      <p>Dùng để gỡ mã thiết bị cũ khi sinh viên đổi sang điện thoại khác</p>
       <input type="text" id="resetMssv" placeholder="Nhập MSSV cần gỡ">
       <input type="text" id="resetHoTen" placeholder="Nhập chính xác Họ và Tên">
       <input type="text" id="resetLop" placeholder="Nhập chính xác Lớp (VD: YHCT24)">
@@ -121,7 +147,7 @@
 </div>
 
 <script>
-  const API_URL = 'https://script.google.com/macros/s/AKfycby-d55ohmsJxfhCWA-7JlNfDCoCu0Hsdtm8ZzGS__2p3PwB-crs8H_nQG-S0SgaWt1c/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbw00XDVHM1GcryUjL-nbPTe_0esX7HTUzjMlmBy3RhXhQa-Ftm17x45A8_XzLBneUdf/exec';
   const SECRET_KEY = "LKN26_YHCT_SECRET_KEY_2026"; 
   const stationCodeMap = {
     "ADNH": { name: "Trạm Âm dương - Ngũ hành" },
@@ -144,7 +170,6 @@
     return found[0];
   }
 
-  // --- Khởi tạo ID thiết bị ---
   let deviceId = localStorage.getItem('LKN_DEVICE_ID');
   if (!deviceId) {
     deviceId = 'DEV_' + Math.random().toString(36).substring(2, 11) + '_' + Date.now();
@@ -153,6 +178,7 @@
 
   let currentSV = null, currentCTV = null, timerInterval = null, html5Scanner = null;
   let pendingConfirmData = null;
+  let capturedPhotoBase64 = ""; // Lưu ảnh đã nén để gửi lên Google Drive
 
   function showEl(id) { document.getElementById(id).classList.remove('hidden'); }
   function hideEl(id) { document.getElementById(id).classList.add('hidden'); }
@@ -171,7 +197,80 @@
     } catch(e) { hideEl('loader'); alert('Lỗi kết nối máy chủ!'); return null; }
   }
 
-  // HÀM ĐĂNG NHẬP (CÓ CỜ FORCE ĐỂ ĐÁ VĂNG)
+  // HÀM NÉN ẢNH CHỤP TỪ CAMERA TRƯỚC KHI GỬI LÊN SERVER
+  function handlePhotoSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Nén JPEG chất lượng 0.7 giúp tải lên trong ~1 giây
+        capturedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+        document.getElementById('photoPreviewImg').src = capturedPhotoBase64;
+        showEl('photoPreviewBox');
+        document.getElementById('photoLabelText').innerText = "📷 Chụp lại ảnh khác";
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearSupportPhoto() {
+    capturedPhotoBase64 = "";
+    document.getElementById('supportPhotoInput').value = "";
+    document.getElementById('photoPreviewImg').src = "";
+    hideEl('photoPreviewBox');
+    document.getElementById('photoLabelText').innerText = "📷 Chụp ảnh Thẻ SV & Mặt SV (Khi Check-in)";
+  }
+
+  // HÀM CTV ĐIỂM DANH HỖ TRỢ (CHECK-IN CÓ ẢNH / CHECK-OUT CHỈ CẦN MSSV)
+  async function handleSupportCheckin(forceEarly = false) {
+    if (!currentCTV) return;
+    const mssv = document.getElementById('supportMssv').value.trim();
+    if (!mssv) return alert("Vui lòng nhập MSSV của sinh viên cần hỗ trợ!");
+
+    const res = await callAPI({
+      action: 'ctvSupportScan',
+      mssv: mssv,
+      tenTram: currentCTV.tenTram,
+      loaiTram: currentCTV.loaiTram,
+      ctvUser: currentCTV.username,
+      photoBase64: capturedPhotoBase64,
+      forceEarly: forceEarly
+    });
+
+    if (!res) return;
+
+    if (res.status === 'warning_time') {
+      if (confirm(`⚠ ${res.message}\n\nBạn có muốn xác nhận ĐẶC CÁCH hoàn thành sớm cho sinh viên ${res.hoTen} không?`)) {
+        handleSupportCheckin(true);
+      }
+    } else {
+      alert(res.message);
+      if (res.status === 'success') {
+        document.getElementById('supportMssv').value = "";
+        clearSupportPhoto();
+      }
+    }
+  }
+
+  // HÀM ĐĂNG NHẬP SINH VIÊN
   async function handleStudentLogin(force = false) {
     const mssv = document.getElementById('svMssv').value.trim();
     const hoTen = document.getElementById('svHoTen').value.trim();
