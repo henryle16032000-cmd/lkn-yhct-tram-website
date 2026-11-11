@@ -147,7 +147,6 @@
       </div>
       <div class="timer-bar-bg"><div id="progress-bar" class="timer-bar-fill"></div></div>
     </div>
-    <p style="text-align:center; font-size:12px; color:#000; margin-top:12px;">Trực trạm: <b id="ctvUserDisp"></b></p>
 
     <!-- TRÌNH THẢ XUỐNG: TÍNH NĂNG HỖ TRỢ SINH VIÊN -->
     <div class="support-dropdown-wrap">
@@ -159,17 +158,17 @@
       <div id="supportDropdownBody" class="dropdown-body hidden">
         <!-- BỘ CHỌN CHỈ HIỂN THỊ 1 TRONG 2 TÍNH NĂNG -->
         <select id="supportFeatureSelect" class="feature-select" onchange="switchSupportFeature()">
-          <option value="checkin">⚡ 1. Điểm danh hỗ trợ (Hư máy / Hết pin)</option>
-          <option value="reset">🛠 2. Hỗ trợ gỡ lỗi thiết bị (Đổi điện thoại)</option>
+          <option value="checkin">⚡ 1. Điểm danh sinh viên không đem thiết bị di động</option>
+          <option value="reset">🛠 2. Gỡ lỗi thiết bị (Sinh viên đăng nhập thiết bị khác)</option>
         </select>
 
         <!-- TÍNH NĂNG 1: ĐIỂM DANH HỖ TRỢ KÈM CHỤP ẢNH -->
         <div id="panelSupportCheckin" class="support-panel">
-          <p><b>Check-in:</b> Nhập MSSV + Chụp ảnh (Mặt SV & Thẻ SV)<br><b>Check-out:</b> Chỉ cần nhập lại MSSV và bấm nút</p>
+          <p><b>Check-in:</b> Nhập MSSV + Chụp ảnh (phải gồm SV & Thẻ SV)<br><b>Check-out:</b> Chỉ cần nhập lại MSSV</p>
           <input type="text" id="supportMssv" placeholder="Nhập MSSV cần hỗ trợ">
           
           <label class="photo-label" for="supportPhotoInput" id="photoLabelText">
-            📷 Chụp ảnh Thẻ SV & Mặt SV (Khi Check-in)
+            📷 Chụp ảnh Thẻ SV & SV (Khi Check-in)
           </label>
           <input type="file" id="supportPhotoInput" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoSelect(event)">
           
@@ -460,7 +459,6 @@
     if (res && res.success) {
       currentCTV = res;
       document.getElementById('stationTitle').innerText = res.tenTram;
-      document.getElementById('ctvUserDisp').innerText = res.username;
       hideEl('ctvLoginBox'); showEl('ctvDash');
       startCountdown10s();
     } else if (res) { alert(res.message); }
